@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { KioskMark, TrayArrow, CelebrateMark } from './icons';
-
-const API_BASE = 'http://localhost:8000/api';
+import { API_BASE, BACKEND_ORIGIN } from '../api';
 
 // Sound effect using Web Audio API for realistic touch keypad clicks
 function playBeep(frequency = 800, duration = 0.05, type = 'sine') {
@@ -573,7 +572,7 @@ export default function KioskScreen({ onSwitchView }) {
                 {/* View Real Printed PDF Button */}
                 {spoolResult.output_url && (
                   <a
-                    href={`http://localhost:8000${spoolResult.output_url}`}
+                    href={`${BACKEND_ORIGIN}${spoolResult.output_url}`}
                     target="_blank"
                     rel="noreferrer"
                     className="btn-view-printed-doc"
