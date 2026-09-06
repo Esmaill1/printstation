@@ -16,6 +16,11 @@ MAX_FILE_SIZE_MB = 50
 ALLOWED_EXTENSIONS = {".pdf"}
 
 
+from services.storage_r2 import (
+    upload_to_r2, download_from_r2, delete_from_r2, is_r2_enabled
+)
+
+
 class FileServiceError(Exception):
     """Custom error for file processing issues."""
     pass
@@ -36,7 +41,7 @@ def validate_file(filename: str, file_size: int) -> None:
 
 def save_upload(file_content: bytes, original_filename: str) -> tuple[str, str]:
     """
-    Save an uploaded file to disk with a UUID-based name.
+    Save an uploaded file to local disk cache and Cloudflare R2 (if enabled).
     Returns (stored_filename, full_path).
     """
     ext = Path(original_filename).suffix.lower()
@@ -45,6 +50,10 @@ def save_upload(file_content: bytes, original_filename: str) -> tuple[str, str]:
     
     with open(full_path, "wb") as f:
         f.write(file_content)
+    
+    # Upload to Cloudflare R2 for durable cloud storage
+    if is_r2_enabled():
+        upload_to_r2(file_content, f"uploads/{stored_filename}", content_type="application/pdf")
     
     return stored_filename, str(full_path)
 
@@ -87,28 +96,46 @@ def extract_text_from_pdf(file_path: str) -> str:
 
 
 def get_file_path(stored_filename: str) -> str:
-    """Get the full path to a stored file."""
+    """
+    Get the full path to a stored file.
+    If missing locally (e.g. after container restart), fetches from Cloudflare R2.
+    """
     path = UPLOAD_DIR / stored_filename
     if not path.exists():
+        if is_r2_enabled():
+            success = download_from_r2(f"uploads/{stored_filename}", str(path))
+            if success and path.exists():
+                return str(path)
         raise FileServiceError(f"File not found: {stored_filename}")
     return str(path)
 
 
 def get_ai_output_path(filename: str) -> str:
-    """Get the full path to an AI-generated output file."""
+    """
+    Get the full path to an AI-generated output file.
+    If missing locally, fetches from Cloudflare R2.
+    """
     path = AI_OUTPUT_DIR / filename
     if not path.exists():
+        if is_r2_enabled():
+            success = download_from_r2(f"ai_output/{filename}", str(path))
+            if success and path.exists():
+                return str(path)
         raise FileServiceError(f"AI output file not found: {filename}")
     return str(path)
 
 
 def cleanup_job_files(stored_filename: str, ai_result_filename: str = None) -> None:
-    """Delete files associated with a completed/cancelled job."""
+    """Delete files associated with a completed/cancelled job from disk and R2."""
     upload_path = UPLOAD_DIR / stored_filename
     if upload_path.exists():
         upload_path.unlink()
+    if is_r2_enabled():
+        delete_from_r2(f"uploads/{stored_filename}")
     
     if ai_result_filename:
         ai_path = AI_OUTPUT_DIR / ai_result_filename
         if ai_path.exists():
             ai_path.unlink()
+        if is_r2_enabled():
+            delete_from_r2(f"ai_output/{ai_result_filename}")

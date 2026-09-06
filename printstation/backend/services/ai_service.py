@@ -224,4 +224,12 @@ def save_summary_as_text(summary: str, job_id: int) -> str:
     with open(filepath, "w", encoding="utf-8") as f:
         f.write(summary)
     
+    # Upload to Cloudflare R2 if configured
+    try:
+        from services.storage_r2 import upload_to_r2, is_r2_enabled
+        if is_r2_enabled():
+            upload_to_r2(summary.encode("utf-8"), f"ai_output/{filename}", content_type="text/plain; charset=utf-8")
+    except Exception:
+        pass
+    
     return filename
