@@ -3,7 +3,7 @@ import { processPayment } from '../api';
 import { useTranslation } from '../i18n';
 
 function PaymentStep({ jobData, onComplete, onBack }) {
-  const { t } = useTranslation();
+  const { t, isRtl } = useTranslation();
   const [selectedMethod, setSelectedMethod] = useState('free_trial');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState(null);
@@ -36,7 +36,7 @@ function PaymentStep({ jobData, onComplete, onBack }) {
       <div className="payment-summary">
         <div className="payment-total">
           <span>{t('payment.totalAmount')}</span>
-          <span className="total-amount">{jobData.total_price.toFixed(2)} EGP</span>
+          <span className="total-amount">{jobData.total_price.toFixed(2)} {isRtl ? 'ج.م' : 'EGP'}</span>
         </div>
         <div className="payment-specs-pills">
           <span className="spec-pill">{jobData.color_mode === 'color' ? t('options.color') : t('options.bw')}</span>

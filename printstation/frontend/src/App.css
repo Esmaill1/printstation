@@ -3362,3 +3362,165 @@ input:focus-visible+.slider {
 [dir="rtl"] .nav-brand {
   flex-direction: row;
 }
+
+/* ─── Bug Fix 1: Keypad must stay LTR (1-2-3, not 3-2-1) ─── */
+/* Numeric keypads are universal LTR — ATMs, phones, kiosks. */
+
+[dir="rtl"] .keypad-grid {
+  direction: ltr;
+}
+
+/* ─── Bug Fix 2: PIN boxes must fill left-to-right ─── */
+/* Numeric OTP / PIN codes are always typed LTR. */
+
+[dir="rtl"] .pin-boxes {
+  direction: ltr;
+}
+
+[dir="rtl"] .pin-display-wrapper {
+  direction: ltr;
+  justify-content: center;
+}
+
+/* ─── Bug Fix 3: Toggle slider thumb direction ─── */
+/* In RTL, the slider translateX must flip to move left (negative). */
+
+[dir="rtl"] input:checked + .slider:before {
+  transform: translateX(-21px);
+}
+
+/* ─── Bug Fix 4: Kiosk job card text alignment ─── */
+/* Job card needs proper RTL text-align for labels and values. */
+
+[dir="rtl"] .kiosk-job-card {
+  text-align: right;
+}
+
+[dir="rtl"] .job-card-value {
+  text-align: left;
+}
+
+[dir="rtl"] .spool-receipt-box {
+  text-align: right;
+}
+
+[dir="rtl"] .confirmation-details {
+  text-align: right;
+}
+
+[dir="rtl"] .detail-row > span:last-child {
+  text-align: left;
+}
+
+/* ─── Bug Fix 5: Kiosk progress bar fill direction ─── */
+/* Progress fills left-to-right universally. */
+
+[dir="rtl"] .kiosk-progress-fill {
+  direction: ltr;
+}
+
+[dir="rtl"] .kiosk-progress-track {
+  direction: ltr;
+}
+
+/* ─── Bug Fix 6: Mixed BiDi text isolation ─── */
+/* Isolate LTR content (brand name, filenames) inside RTL flow. */
+
+[dir="rtl"] .kiosk-title {
+  unicode-bidi: plaintext;
+}
+
+[dir="rtl"] .doc-meta-filename {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+[dir="rtl"] .file-pill {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+[dir="rtl"] .job-card-value {
+  unicode-bidi: isolate;
+}
+
+[dir="rtl"] .telemetry-val {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+/* ─── Fix: Pickup code always LTR ─── */
+
+[dir="rtl"] .pickup-code {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+/* ─── Fix: Hard shadow flips for RTL ─── */
+
+[dir="rtl"] .pin-box.filled {
+  box-shadow: -3px 3px 0 var(--c-cyan);
+}
+
+[dir="rtl"] .kiosk-btn-print {
+  box-shadow: -4px 4px 0 var(--c-cyan);
+}
+
+[dir="rtl"] .kiosk-btn-print:hover {
+  transform: translate(1px, -1px);
+  box-shadow: -6px 6px 0 var(--c-cyan);
+}
+
+[dir="rtl"] .kiosk-btn-print:active {
+  transform: translate(-3px, 3px);
+  box-shadow: 0 0 0 var(--c-cyan);
+}
+
+[dir="rtl"] .kiosk-btn-done {
+  box-shadow: -4px 4px 0 var(--c-yellow);
+}
+
+[dir="rtl"] .kiosk-btn-done:hover {
+  transform: translate(1px, -1px);
+  box-shadow: -6px 6px 0 var(--c-yellow);
+}
+
+[dir="rtl"] .btn-primary {
+  box-shadow: -3px 3px 0 var(--c-cyan);
+}
+
+[dir="rtl"] .btn-primary:hover:not(:disabled) {
+  transform: translate(1px, -1px);
+  box-shadow: -5px 5px 0 var(--c-cyan);
+}
+
+[dir="rtl"] .btn-primary:active:not(:disabled) {
+  transform: translate(-2px, 2px);
+  box-shadow: 0 0 0 var(--c-cyan);
+}
+
+[dir="rtl"] .segmented-btn.active {
+  box-shadow: -3px 3px 0 var(--c-cyan);
+}
+
+[dir="rtl"] .payment-option.selected {
+  box-shadow: -3px 3px 0 var(--c-cyan);
+  transform: translate(1px, -1px);
+}
+
+[dir="rtl"] .lang-toggle-btn {
+  direction: ltr;
+  box-shadow: -2px 2px 0 var(--ink);
+}
+
+[dir="rtl"] .lang-toggle-btn:hover {
+  box-shadow: -3px 3px 0 var(--ink);
+}
+
+[dir="rtl"] .lang-toggle-btn:active {
+  box-shadow: -1px 1px 0 var(--ink);
+}
+
+[dir="rtl"] .view-mode-toggle {
+  box-shadow: -3px 3px 0 rgba(30, 40, 51, 0.15);
+}

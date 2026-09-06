@@ -2,7 +2,7 @@ import { SuccessMark } from './icons';
 import { useTranslation } from '../i18n';
 
 function ConfirmationStep({ jobData, pickupCode, onNewJob }) {
-  const { t } = useTranslation();
+  const { t, isRtl } = useTranslation();
 
   return (
     <div className="step-card confirmation-card">
@@ -23,11 +23,11 @@ function ConfirmationStep({ jobData, pickupCode, onNewJob }) {
       <div className="confirmation-details">
         <div className="detail-row">
           <span>{t('confirmation.file')}</span>
-          <span>{jobData.original_filename || jobData.filename}</span>
+          <span className="job-card-value">{jobData.original_filename || jobData.filename}</span>
         </div>
         <div className="detail-row">
           <span>{t('options.totalPages')}</span>
-          <span>{jobData.total_pages || jobData.page_count} pages × {jobData.copies || 1}</span>
+          <span>{jobData.total_pages || jobData.page_count} {t('options.pages')} × {jobData.copies || 1}</span>
         </div>
         <div className="detail-row">
           <span>{t('options.printOptions')}</span>
@@ -45,15 +45,15 @@ function ConfirmationStep({ jobData, pickupCode, onNewJob }) {
         {jobData.ai_mode && jobData.ai_mode !== 'none' && (
           <div className="detail-row">
             <span>{t('options.aiCardBadge')}</span>
-            <span>{jobData.original_pages} → {jobData.total_pages} pages</span>
+            <span><bdi>{jobData.original_pages} {isRtl ? '←' : '→'} {jobData.total_pages}</bdi> {t('options.pages')}</span>
           </div>
         )}
         <div className="detail-row">
           <span>{t('confirmation.totalPaid')}</span>
-          <span className="val-price">{jobData.total_price.toFixed(2)} EGP</span>
+          <span className="val-price">{jobData.total_price.toFixed(2)} {isRtl ? 'ج.م' : 'EGP'}</span>
         </div>
         <div className="detail-row">
-          <span>{t('kiosk.price')}</span>
+          <span>{t('confirmation.paymentMethod')}</span>
           <span className="status-badge status-paid">{t('confirmation.badge')}</span>
         </div>
       </div>

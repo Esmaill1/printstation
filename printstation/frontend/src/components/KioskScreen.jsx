@@ -385,7 +385,7 @@ export default function KioskScreen({ onSwitchView }) {
                       });
                   }}
                 >
-                  {t('kiosk.demoLoadBtn', { id: pendingDemoJobs[0].job_id, filename: pendingDemoJobs[0].filename })}
+                  {t('kiosk.demoLoad')} <bdi>#{pendingDemoJobs[0].job_id}</bdi> <bdi>({pendingDemoJobs[0].filename})</bdi>
                 </button>
               ) : (
                 <span className="demo-hint">
