@@ -22,7 +22,7 @@ from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 load_dotenv()
 
-from fastapi import FastAPI, UploadFile, File, HTTPException, Depends, Query
+from fastapi import FastAPI, UploadFile, File, HTTPException, Depends, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
@@ -73,6 +73,41 @@ app.add_middleware(
     allow_headers=["*"],
     expose_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def auto_api_prefix_middleware(request: Request, call_next):
+    """
+    Ensure routes work whether called with /api prefix or without.
+    e.g. /upload automatically rewrites to /api/upload.
+    """
+    path = request.url.path
+    # Don't touch root, /api, /docs, /redoc, /openapi.json
+    if (
+        path != "/"
+        and not path.startswith("/api")
+        and not path.startswith("/docs")
+        and not path.startswith("/openapi.json")
+        and not path.startswith("/redoc")
+    ):
+        request.scope["path"] = f"/api{path}"
+    return await call_next(request)
+
+
+@app.get("/")
+@app.get("/api")
+async def root_health_check():
+    """Service health check endpoint."""
+    return {
+        "status": "online",
+        "service": "PrintStation Backend API",
+        "version": "0.1.0",
+        "endpoints": {
+            "upload": "/api/upload",
+            "docs": "/docs",
+            "stats": "/api/stats"
+        }
+    }
 
 
 # ──────────────────────────────────────────────
