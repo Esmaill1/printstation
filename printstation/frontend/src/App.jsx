@@ -8,6 +8,7 @@ import StatusTracker from './components/StatusTracker';
 import KioskScreen from './components/KioskScreen';
 import { BrandMark } from './components/icons';
 import { getJobStatus } from './api';
+import { useTranslation, LanguageToggle } from './i18n';
 
 const STEPS = ['upload', 'options', 'payment', 'confirmation'];
 
@@ -18,13 +19,6 @@ const STEP_COLORS = {
   options: 'var(--c-magenta)',
   payment: 'var(--c-yellow)',
   confirmation: 'var(--ink)',
-};
-
-const STEP_LABELS = {
-  upload: 'Upload',
-  options: 'Options',
-  payment: 'Payment',
-  confirmation: 'Done',
 };
 
 /* The registration strip: printed on every sheet that leaves a real
@@ -99,7 +93,15 @@ function App() {
     goToStep('upload');
   };
 
+  const { t, isRtl } = useTranslation();
   const stepIndex = STEPS.indexOf(currentStep);
+
+  const STEP_LABELS = {
+    upload: t('steps.upload'),
+    options: t('steps.options'),
+    payment: t('steps.payment'),
+    confirmation: t('steps.confirmation'),
+  };
 
   // If in kiosk view mode, render full ATM Touchscreen UI
   if (viewMode === 'kiosk') {
@@ -109,21 +111,24 @@ function App() {
         <header className="kiosk-global-nav">
           <div className="nav-brand">
             <span className="nav-dot"></span>
-            <strong>PrintStation Hardware Simulator</strong>
+            <strong>{t('brand.simulatorTitle')}</strong>
           </div>
-          <div className="view-mode-toggle">
-            <button
-              className={`mode-btn ${viewMode === 'student' ? 'active' : ''}`}
-              onClick={() => setViewMode('student')}
-            >
-              Student Phone View
-            </button>
-            <button
-              className={`mode-btn ${viewMode === 'kiosk' ? 'active' : ''}`}
-              onClick={() => setViewMode('kiosk')}
-            >
-              Kiosk Touchscreen View
-            </button>
+          <div className="header-actions">
+            <LanguageToggle />
+            <div className="view-mode-toggle">
+              <button
+                className={`mode-btn ${viewMode === 'student' ? 'active' : ''}`}
+                onClick={() => setViewMode('student')}
+              >
+                {t('nav.studentPhoneView')}
+              </button>
+              <button
+                className={`mode-btn ${viewMode === 'kiosk' ? 'active' : ''}`}
+                onClick={() => setViewMode('kiosk')}
+              >
+                {t('nav.kioskTouchscreenView')}
+              </button>
+            </div>
           </div>
         </header>
 
@@ -144,24 +149,27 @@ function App() {
             <div className="brand">
               <BrandMark className="brand-mark" />
               <div>
-                <h1 className="brand-name">PrintStation</h1>
-                <p className="brand-sub">Upload · Pay · Print</p>
+                <h1 className="brand-name">{t('brand.name')}</h1>
+                <p className="brand-sub">{t('brand.sub')}</p>
               </div>
             </div>
 
-            <div className="view-mode-toggle">
-              <button
-                className={`mode-btn ${viewMode === 'student' ? 'active' : ''}`}
-                onClick={() => setViewMode('student')}
-              >
-                Student View
-              </button>
-              <button
-                className={`mode-btn ${viewMode === 'kiosk' ? 'active' : ''}`}
-                onClick={() => setViewMode('kiosk')}
-              >
-                Kiosk Touchscreen
-              </button>
+            <div className="header-actions">
+              <LanguageToggle />
+              <div className="view-mode-toggle">
+                <button
+                  className={`mode-btn ${viewMode === 'student' ? 'active' : ''}`}
+                  onClick={() => setViewMode('student')}
+                >
+                  {t('nav.studentView')}
+                </button>
+                <button
+                  className={`mode-btn ${viewMode === 'kiosk' ? 'active' : ''}`}
+                  onClick={() => setViewMode('kiosk')}
+                >
+                  {t('nav.kioskView')}
+                </button>
+              </div>
             </div>
           </div>
         </header>
@@ -219,13 +227,13 @@ function App() {
         {jobData && currentStep === 'confirmation' && (
           <div className="kiosk-shortcut-banner">
             <div className="shortcut-text">
-              <span>Ready to collect?</span>
+              <span>{t('confirmation.kioskBannerTitle')}</span>
               <p>
-                Switch to the <strong>Kiosk Touchscreen</strong>, enter code <code>{pickupCode}</code>, and print.
+                {t('confirmation.kioskBannerDesc', { code: pickupCode })}
               </p>
             </div>
             <button className="btn-kiosk-jump" onClick={() => setViewMode('kiosk')}>
-              Open Kiosk Screen →
+              {t('confirmation.kioskBannerBtn')}
             </button>
           </div>
         )}
@@ -235,7 +243,7 @@ function App() {
         )}
 
         <footer className="app-footer">
-          <p>PrintStation v0.1 — University Graduation Project Prototype</p>
+          <p>{t('brand.footer')}</p>
         </footer>
       </div>
     </div>

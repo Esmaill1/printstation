@@ -3220,3 +3220,145 @@ input:focus-visible+.slider {
     transition: none;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   BILINGUAL & RTL SUPPORT (Arabic / English)
+   ═══════════════════════════════════════════════════════════ */
+
+[dir="rtl"] {
+  --font-display: 'Cairo', 'Archivo', sans-serif;
+  --font-body: 'Cairo', -apple-system, sans-serif;
+  direction: rtl;
+  text-align: right;
+}
+
+[dir="rtl"] body {
+  font-family: var(--font-body);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lang-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: var(--sheet);
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--ink);
+  cursor: pointer;
+  box-shadow: 2px 2px 0 var(--ink);
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.15s ease;
+  user-select: none;
+}
+
+.lang-toggle-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 3px 3px 0 var(--ink);
+  background: var(--paper);
+}
+
+.lang-toggle-btn:active {
+  transform: translateY(1px);
+  box-shadow: 1px 1px 0 var(--ink);
+}
+
+.lang-globe-icon {
+  font-size: 1rem;
+}
+
+[dir="rtl"] .brand {
+  flex-direction: row;
+}
+
+[dir="rtl"] .step-card {
+  text-align: right;
+}
+
+[dir="rtl"] .option-card,
+[dir="rtl"] .payment-card {
+  text-align: right;
+}
+
+[dir="rtl"] .btn-kiosk-jump,
+[dir="rtl"] .btn-primary,
+[dir="rtl"] .btn-secondary {
+  letter-spacing: 0;
+}
+
+[dir="rtl"] .progress-fill {
+  left: auto;
+  right: 0;
+}
+
+[dir="rtl"] .segmented-btn {
+  text-align: right;
+}
+
+[dir="rtl"] .group-label {
+  flex-direction: row;
+}
+
+[dir="rtl"] .doc-meta-badge {
+  flex-direction: row;
+}
+
+[dir="rtl"] .studio-title-group h2 {
+  flex-direction: row;
+}
+
+[dir="rtl"] .job-card-row {
+  flex-direction: row;
+}
+
+[dir="rtl"] .summary-headline {
+  flex-direction: row;
+}
+
+[dir="rtl"] .summary-details-grid {
+  text-align: right;
+}
+
+[dir="rtl"] .receipt-row {
+  flex-direction: row;
+}
+
+[dir="rtl"] .kiosk-brand {
+  flex-direction: row;
+}
+
+[dir="rtl"] .kiosk-telemetry {
+  flex-direction: row;
+}
+
+[dir="rtl"] .ai-title-row {
+  flex-direction: row;
+}
+
+[dir="rtl"] .ai-card-header {
+  flex-direction: row;
+}
+
+[dir="rtl"] .preview-tabs {
+  flex-direction: row;
+}
+
+[dir="rtl"] .payment-total {
+  flex-direction: row;
+}
+
+[dir="rtl"] .detail-row {
+  flex-direction: row;
+}
+
+[dir="rtl"] .nav-brand {
+  flex-direction: row;
+}

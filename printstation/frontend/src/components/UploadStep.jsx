@@ -1,8 +1,10 @@
 import { useState, useCallback } from 'react';
 import { uploadFile } from '../api';
 import { DropMark } from './icons';
+import { useTranslation } from '../i18n';
 
 function UploadStep({ onComplete }) {
+  const { t } = useTranslation();
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState(null);
@@ -12,12 +14,12 @@ function UploadStep({ onComplete }) {
     setError(null);
 
     if (!file.name.toLowerCase().endsWith('.pdf')) {
-      setError('Only PDF files are accepted. Export your document as PDF first, then upload it.');
+      setError(t('upload.errorExt'));
       return;
     }
 
     if (file.size > 50 * 1024 * 1024) {
-      setError('File is too large. Maximum size is 50MB.');
+      setError(t('upload.errorSize'));
       return;
     }
 
@@ -28,10 +30,10 @@ function UploadStep({ onComplete }) {
       const result = await uploadFile(file);
       onComplete(result);
     } catch (err) {
-      setError(err.message || 'Upload failed. Is the backend running?');
+      setError(err.message || t('upload.errorFailed'));
       setIsUploading(false);
     }
-  }, [onComplete]);
+  }, [onComplete, t]);
 
   const handleDrop = useCallback((e) => {
     e.preventDefault();
@@ -54,10 +56,9 @@ function UploadStep({ onComplete }) {
 
   return (
     <div className="step-card">
-      <h2>Upload your document</h2>
+      <h2>{t('upload.title')}</h2>
       <p className="step-description">
-        Drop in a PDF and it goes straight into the print queue. PDF is the only
-        format this prototype accepts.
+        {t('upload.description')}
       </p>
 
       <div
@@ -79,16 +80,16 @@ function UploadStep({ onComplete }) {
         {isUploading ? (
           <div className="upload-progress">
             <div className="spinner" aria-label="Uploading"></div>
-            <p>Uploading {selectedFile?.name}...</p>
+            <p>{t('upload.uploading', { filename: selectedFile?.name })}</p>
           </div>
         ) : (
           <>
             <span className="drop-mark"><DropMark /></span>
             <p className="drop-text">
-              Drag & drop your PDF here
+              {t('upload.dragText')}
             </p>
-            <p className="drop-subtext">or click to browse</p>
-            <span className="file-limit">PDF only · Max 50MB · No page limit</span>
+            <p className="drop-subtext">{t('upload.browseText')}</p>
+            <span className="file-limit">{t('upload.fileLimit')}</span>
           </>
         )}
       </div>

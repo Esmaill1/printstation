@@ -1,64 +1,66 @@
 import { SuccessMark } from './icons';
+import { useTranslation } from '../i18n';
 
 function ConfirmationStep({ jobData, pickupCode, onNewJob }) {
+  const { t } = useTranslation();
+
   return (
     <div className="step-card confirmation-card">
       <span className="success-icon"><SuccessMark /></span>
-      <h2>Payment successful</h2>
+      <h2>{t('confirmation.title')}</h2>
       <p className="step-description">
-        Your document is queued for printing. Take the pickup code below to the
-        kiosk and enter it on the screen.
+        {t('confirmation.description')}
       </p>
 
       {/* The pickup ticket — printed, perforated, tear-off */}
       <div className="pickup-ticket">
-        <span className="pickup-label">Pickup code</span>
+        <span className="pickup-label">{t('confirmation.pickupCodeLabel')}</span>
         <div className="pickup-code">{pickupCode}</div>
         <div className="ticket-perf" aria-hidden="true"></div>
-        <span className="pickup-hint">Enter this code on the kiosk screen</span>
+        <span className="pickup-hint">{t('confirmation.step2')}</span>
       </div>
 
       <div className="confirmation-details">
         <div className="detail-row">
-          <span>File</span>
+          <span>{t('confirmation.file')}</span>
           <span>{jobData.original_filename || jobData.filename}</span>
         </div>
         <div className="detail-row">
-          <span>Pages & copies</span>
-          <span>{jobData.total_pages || jobData.page_count} pages × {jobData.copies || 1} copy</span>
+          <span>{t('options.totalPages')}</span>
+          <span>{jobData.total_pages || jobData.page_count} pages × {jobData.copies || 1}</span>
         </div>
         <div className="detail-row">
-          <span>Print options</span>
+          <span>{t('options.printOptions')}</span>
           <span>
-            {jobData.color_mode === 'color' ? 'Full color' : 'B&W'} · {jobData.duplex === 'duplex' ? 'Double-sided' : 'Single-sided'}
+            {jobData.color_mode === 'color' ? t('options.color') : t('options.bw')} · {jobData.duplex === 'duplex' ? t('options.duplex') : t('options.simplex')}
             {jobData.pages_per_sheet > 1 ? ` · ${jobData.pages_per_sheet}-Up` : ''}
           </span>
         </div>
         <div className="detail-row">
-          <span>Total sheets</span>
+          <span>{t('options.estimatedSheets')}</span>
           <span className="val-sheets">
-            {jobData.total_physical_sheets || ((jobData.physical_sheets || 1) * (jobData.copies || 1))} paper sheets
+            {t('options.sheetsCount', { count: jobData.total_physical_sheets || ((jobData.physical_sheets || 1) * (jobData.copies || 1)) })}
           </span>
         </div>
         {jobData.ai_mode && jobData.ai_mode !== 'none' && (
           <div className="detail-row">
-            <span>AI summary</span>
+            <span>{t('options.aiCardBadge')}</span>
             <span>{jobData.original_pages} → {jobData.total_pages} pages</span>
           </div>
         )}
         <div className="detail-row">
-          <span>Total paid</span>
+          <span>{t('confirmation.totalPaid')}</span>
           <span className="val-price">{jobData.total_price.toFixed(2)} EGP</span>
         </div>
         <div className="detail-row">
-          <span>Status</span>
-          <span className="status-badge status-paid">Ready at kiosk</span>
+          <span>{t('kiosk.price')}</span>
+          <span className="status-badge status-paid">{t('confirmation.badge')}</span>
         </div>
       </div>
 
       <div className="step-actions" style={{ justifyContent: 'center' }}>
         <button className="btn btn-primary" onClick={onNewJob}>
-          Print another document
+          {t('confirmation.printAnotherBtn')}
         </button>
       </div>
     </div>

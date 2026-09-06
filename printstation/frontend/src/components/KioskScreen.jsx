@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { KioskMark, TrayArrow, CelebrateMark } from './icons';
 import { API_BASE, BACKEND_ORIGIN } from '../api';
+import { useTranslation } from '../i18n';
 
 // Sound effect using Web Audio API for realistic touch keypad clicks
 function playBeep(frequency = 800, duration = 0.05, type = 'sine') {
@@ -24,6 +25,7 @@ function playBeep(frequency = 800, duration = 0.05, type = 'sine') {
 }
 
 export default function KioskScreen({ onSwitchView }) {
+  const { t, isRtl } = useTranslation();
   const [pin, setPin] = useState('');
   const [kioskState, setKioskState] = useState('idle'); // idle | looking_up | confirm | printing | dispensed
   const [jobInfo, setJobInfo] = useState(null);
@@ -141,7 +143,7 @@ export default function KioskScreen({ onSwitchView }) {
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         playBeep(250, 0.2, 'sawtooth');
-        setErrorMsg(body.detail || 'Code not found. Check the 6-digit code and try again.');
+        setErrorMsg(body.detail || t('kiosk.codeNotFound'));
         setKioskState('idle');
         return;
       }
@@ -149,7 +151,7 @@ export default function KioskScreen({ onSwitchView }) {
       const data = await res.json();
       if (data.status !== 'paid') {
         playBeep(300, 0.15);
-        setErrorMsg(`This job is '${data.status}'. Only paid jobs can be printed.`);
+        setErrorMsg(t('kiosk.jobNotPaid', { status: data.status }));
         setKioskState('idle');
         return;
       }
@@ -158,7 +160,7 @@ export default function KioskScreen({ onSwitchView }) {
       setJobInfo(data);
       setKioskState('confirm');
     } catch {
-      setErrorMsg('Connection error. Is the backend server running?');
+      setErrorMsg(t('kiosk.connectionError'));
       setKioskState('idle');
     }
   };
@@ -259,24 +261,24 @@ export default function KioskScreen({ onSwitchView }) {
         <div className="kiosk-brand">
           <span className="kiosk-icon"><KioskMark /></span>
           <div>
-            <h2 className="kiosk-title">PrintStation Kiosk #01</h2>
-            <span className="kiosk-location">Campus Library · Main Entrance Hall</span>
+            <h2 className="kiosk-title">{t('kiosk.kioskName')}</h2>
+            <span className="kiosk-location">{t('kiosk.kioskLocation')}</span>
           </div>
         </div>
 
         <div className="kiosk-telemetry">
           <div className="telemetry-item">
             <span className="telemetry-dot online"></span>
-            <span>Online</span>
+            <span>{t('kiosk.statusOnline')}</span>
           </div>
-          <div className="telemetry-item" onClick={refillPaper} title="Click to refill paper tray" role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && refillPaper()}>
-            <span className="telemetry-label">Paper:</span>
+          <div className="telemetry-item" onClick={refillPaper} title={t('kiosk.refillPaperTitle')} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && refillPaper()}>
+            <span className="telemetry-label">{t('kiosk.paperLabel')}</span>
             <span className={`telemetry-val ${paperLevel < 50 ? 'warning' : ''}`}>
               {paperLevel}/500
             </span>
           </div>
           <div className="telemetry-item">
-            <span className="telemetry-label">Toner:</span>
+            <span className="telemetry-label">{t('kiosk.tonerLabel')}</span>
             <span className="telemetry-val">94%</span>
           </div>
           <div className="telemetry-item kiosk-clock">
@@ -291,9 +293,9 @@ export default function KioskScreen({ onSwitchView }) {
         {kioskState === 'idle' && (
           <div className="kiosk-flow-container">
             <div className="kiosk-welcome-banner">
-              <span className="kiosk-instruction-icon">Collect your prints</span>
-              <h1>Enter your 6-digit pickup code</h1>
-              <p>The code was generated when you paid in the student portal</p>
+              <span className="kiosk-instruction-icon">{t('kiosk.collectPrints')}</span>
+              <h1>{t('kiosk.enterCode')}</h1>
+              <p>{t('kiosk.codeSubtext')}</p>
             </div>
 
             {/* PIN Boxes */}
@@ -315,7 +317,7 @@ export default function KioskScreen({ onSwitchView }) {
               </div>
               {pin.length > 0 && (
                 <button className="pin-quick-clear" onClick={() => handleKeypadPress('clear')}>
-                  Clear
+                  {t('kiosk.clear')}
                 </button>
               )}
             </div>
@@ -345,7 +347,7 @@ export default function KioskScreen({ onSwitchView }) {
                   onClick={() => handleKeypadPress('clear')}
                   title="Clear entry"
                 >
-                  <span className="btn-label">CLEAR</span>
+                  <span className="btn-label">{t('kiosk.clearAll')}</span>
                 </button>
                 <button
                   type="button"
@@ -360,15 +362,15 @@ export default function KioskScreen({ onSwitchView }) {
                   onClick={() => handleKeypadPress('backspace')}
                   title="Backspace"
                 >
-                  <span className="btn-label">⌫ DEL</span>
+                  <span className="btn-label">{t('kiosk.del')}</span>
                 </button>
               </div>
             </div>
 
             {/* Demo Quick-Fill Bar */}
             <div className="kiosk-demo-bar">
-              <span className="demo-tag">Demo</span>
-              <span>Paid jobs ready:</span>
+              <span className="demo-tag">{t('kiosk.demoTag')}</span>
+              <span>{t('kiosk.demoReady')}</span>
               {pendingDemoJobs.length > 0 ? (
                 <button
                   className="demo-pill-btn"
@@ -383,11 +385,11 @@ export default function KioskScreen({ onSwitchView }) {
                       });
                   }}
                 >
-                  Load #{pendingDemoJobs[0].job_id} ({pendingDemoJobs[0].filename})
+                  {t('kiosk.demoLoadBtn', { id: pendingDemoJobs[0].job_id, filename: pendingDemoJobs[0].filename })}
                 </button>
               ) : (
                 <span className="demo-hint">
-                  Upload & pay a document in <strong>Student View</strong> to get a pickup code
+                  {t('kiosk.demoSubtext')}
                 </span>
               )}
             </div>
@@ -398,41 +400,41 @@ export default function KioskScreen({ onSwitchView }) {
         {kioskState === 'looking_up' && (
           <div className="kiosk-loading-view">
             <div className="kiosk-spinner" aria-label="Looking up code"></div>
-            <h2>Checking code {pin}...</h2>
-            <p>Verifying with the PrintStation server...</p>
+            <h2>{t('kiosk.checkingCode', { pin })}</h2>
+            <p>{t('kiosk.verifyingServer')}</p>
           </div>
         )}
 
         {/* VIEW 2: CONFIRMATION / JOB FOUND */}
         {kioskState === 'confirm' && jobInfo && (
           <div className="kiosk-confirm-view">
-            <div className="confirm-badge">Print job ready</div>
-            <h2>Confirm your document</h2>
-            <p className="kiosk-subhead">Check the job details and pick a printer.</p>
+            <div className="confirm-badge">{t('kiosk.confirmBadge')}</div>
+            <h2>{t('kiosk.confirmTitle')}</h2>
+            <p className="kiosk-subhead">{t('kiosk.confirmSubhead')}</p>
 
             <div className="kiosk-job-card">
               <div className="job-card-row">
-                <span className="job-card-label">Document</span>
+                <span className="job-card-label">{t('kiosk.docLabel')}</span>
                 <span className="job-card-value">{jobInfo.filename}</span>
               </div>
               <div className="job-card-row">
-                <span className="job-card-label">Sheets to print</span>
+                <span className="job-card-label">{t('kiosk.sheetsLabel')}</span>
                 <span className="job-card-value highlight-sheets">
                   {jobInfo.total_pages}
                 </span>
               </div>
               <div className="job-card-row">
-                <span className="job-card-label">Copies</span>
+                <span className="job-card-label">{t('kiosk.copiesLabel')}</span>
                 <span className="job-card-value">{jobInfo.copies || 1}</span>
               </div>
               <div className="job-card-row">
-                <span className="job-card-label">Job ID</span>
+                <span className="job-card-label">{t('kiosk.jobIdLabel')}</span>
                 <span className="job-card-value">#{jobInfo.job_id}</span>
               </div>
 
               {/* Hardware / Virtual Printer Selector */}
               <div className="job-card-row printer-row">
-                <span className="job-card-label">Printer hardware</span>
+                <span className="job-card-label">{t('kiosk.printerLabel')}</span>
                 <select
                   className="kiosk-printer-select"
                   value={selectedPrinter}
@@ -442,29 +444,29 @@ export default function KioskScreen({ onSwitchView }) {
                   {printers.length > 0 ? (
                     printers.map((p) => (
                       <option key={p.id} value={p.name}>
-                        {p.name} {p.type === 'system' ? '(Windows Hardware)' : '(Virtual Tray)'}
+                        {p.name} {p.type === 'system' ? t('kiosk.windowsHardware') : t('kiosk.virtualTray')}
                       </option>
                     ))
                   ) : (
                     <option value="Virtual Kiosk Tray Spooler (Default)">
-                      Virtual Kiosk Tray Spooler (Default)
+                      {t('kiosk.defaultSpooler')}
                     </option>
                   )}
                 </select>
               </div>
 
               <div className="job-card-row">
-                <span className="job-card-label">Payment</span>
-                <span className="status-pill-paid">Paid & verified</span>
+                <span className="job-card-label">{t('kiosk.paymentLabel')}</span>
+                <span className="status-pill-paid">{t('kiosk.paidVerified')}</span>
               </div>
             </div>
 
             <div className="kiosk-actions-row">
               <button className="kiosk-btn kiosk-btn-cancel" onClick={resetKiosk}>
-                ← Cancel & re-enter code
+                {t('kiosk.cancelReenterBtn')}
               </button>
               <button className="kiosk-btn kiosk-btn-print" onClick={startPrinting}>
-                Start printing
+                {t('kiosk.startPrintingBtn')}
               </button>
             </div>
           </div>
@@ -474,9 +476,9 @@ export default function KioskScreen({ onSwitchView }) {
         {kioskState === 'printing' && (
           <div className="kiosk-printing-view">
             <div className="printing-header">
-              <h2>Printing your document...</h2>
+              <h2>{t('kiosk.printingTitle')}</h2>
               <p>
-                {selectedPrinter} · Sheet {currentSheet} of {totalSheets}
+                {t('kiosk.printingSheetInfo', { printer: selectedPrinter, current: currentSheet, total: totalSheets })}
               </p>
             </div>
 
@@ -485,7 +487,7 @@ export default function KioskScreen({ onSwitchView }) {
               <div className="printer-assembly">
                 {/* Paper Feed Tray */}
                 <div className="assembly-tray feed-tray">
-                  <span className="tray-label">Feed tray</span>
+                  <span className="tray-label">{t('kiosk.feedTray')}</span>
                   <div className="tray-paper-stack">
                     <div className="paper-sheet in-stack"></div>
                     <div className="paper-sheet in-stack"></div>
@@ -505,9 +507,9 @@ export default function KioskScreen({ onSwitchView }) {
 
                 {/* Output Collection Tray */}
                 <div className="assembly-tray output-tray">
-                  <span className="tray-label">Output tray</span>
+                  <span className="tray-label">{t('kiosk.outputTray')}</span>
                   <div className="output-drop-zone active">
-                    <span className="tray-sensor">Ready</span>
+                    <span className="tray-sensor">{t('kiosk.ready')}</span>
                   </div>
                 </div>
               </div>
@@ -516,7 +518,7 @@ export default function KioskScreen({ onSwitchView }) {
             {/* Progress Bar */}
             <div className="kiosk-progress-container">
               <div className="progress-numbers">
-                <span>Spooling {jobInfo?.filename}</span>
+                <span>{t('kiosk.spoolingFile', { filename: jobInfo?.filename })}</span>
                 <span className="progress-percent">{printProgress}%</span>
               </div>
               <div
@@ -529,7 +531,7 @@ export default function KioskScreen({ onSwitchView }) {
                 <div className="kiosk-progress-fill" style={{ width: `${printProgress}%` }}></div>
               </div>
               <span className="print-hint">
-                OS spooler active · producing verified sheets
+                {t('kiosk.spoolerHint')}
               </span>
             </div>
           </div>
@@ -539,31 +541,31 @@ export default function KioskScreen({ onSwitchView }) {
         {kioskState === 'dispensed' && (
           <div className="kiosk-dispensed-view">
             <span className="dispense-success-icon"><CelebrateMark /></span>
-            <h1>Printing complete</h1>
+            <h1>{t('kiosk.dispensedTitle')}</h1>
             <p className="dispense-instruction">
-              <strong>{totalSheets}</strong> printed sheet{totalSheets === 1 ? '' : 's'} produced and verified.
+              {t('kiosk.dispensedInstruction', { total: totalSheets, suffix: totalSheets === 1 ? '' : 's' })}
             </p>
 
             {/* Real Spooler Telemetry Card */}
             {spoolResult && (
               <div className="spool-receipt-box">
                 <div className="receipt-header">
-                  <span className="receipt-badge">KIOSK PRINT RECEIPT</span>
+                  <span className="receipt-badge">{t('kiosk.receiptBadge')}</span>
                 </div>
                 <div className="receipt-row">
-                  <span>Spooler job</span>
+                  <span>{t('kiosk.spoolerJob')}</span>
                   <strong>{spoolResult.spool_id}</strong>
                 </div>
                 <div className="receipt-row">
-                  <span>Hardware device</span>
+                  <span>{t('kiosk.hardwareDevice')}</span>
                   <span>{spoolResult.printer_name}</span>
                 </div>
                 <div className="receipt-row">
-                  <span>Sheets produced</span>
+                  <span>{t('kiosk.sheetsProduced')}</span>
                   <span>{spoolResult.total_sheets}</span>
                 </div>
                 <div className="receipt-row">
-                  <span>Output file</span>
+                  <span>{t('kiosk.outputFile')}</span>
                   <span className="file-pill" title={spoolResult.output_path}>
                     {spoolResult.output_filename}
                   </span>
@@ -577,7 +579,7 @@ export default function KioskScreen({ onSwitchView }) {
                     rel="noreferrer"
                     className="btn-view-printed-doc"
                   >
-                    Open printed output PDF →
+                    {t('kiosk.openOutputPdf')}
                   </a>
                 )}
               </div>
@@ -587,16 +589,16 @@ export default function KioskScreen({ onSwitchView }) {
               <div className="tray-box">
                 <div className="tray-glow" aria-hidden="true"></div>
                 <span className="tray-arrow"><TrayArrow /></span>
-                <span className="tray-text">COLLECT PAPERS FROM THE TRAY</span>
+                <span className="tray-text">{t('kiosk.collectTray')}</span>
               </div>
             </div>
 
             <div className="dispense-footer">
               <p className="countdown-text">
-                Screen resets in <strong>{countdown}s</strong>
+                {t('kiosk.screenResetsIn', { seconds: countdown })}
               </p>
               <button className="kiosk-btn kiosk-btn-done" onClick={resetKiosk}>
-                ✓ Finished — next student
+                {t('kiosk.finishedBtn')}
               </button>
             </div>
           </div>
@@ -606,10 +608,10 @@ export default function KioskScreen({ onSwitchView }) {
       {/* Physical Kiosk Bezel Bottom Bar */}
       <div className="kiosk-bezel-footer">
         <div className="bezel-slot-instruction">
-          <span>Output paper tray below · kiosk-simulator/printed_output/</span>
+          <span>{t('kiosk.footerSlotInstruction')}</span>
         </div>
         <button className="kiosk-switch-btn" onClick={onSwitchView}>
-          Switch to Student Portal →
+          {t('kiosk.switchToStudent')}
         </button>
       </div>
     </div>

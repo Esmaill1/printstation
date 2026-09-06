@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { updatePrintOptions, getPreviewUrl, getAiPreviewUrl } from '../api';
 import { BrandMark, AiMark } from './icons';
 import PdfPreview from './PdfPreview';
+import { useTranslation } from '../i18n';
 
 function parsePageRangeCount(rangeStr, totalPages) {
   if (!rangeStr || rangeStr.trim().toLowerCase() === 'all') {
@@ -32,6 +33,7 @@ function parsePageRangeCount(rangeStr, totalPages) {
 }
 
 function OptionsStep({ jobData, onComplete, onBack }) {
+  const { t } = useTranslation();
   const [colorMode, setColorMode] = useState(jobData.color_mode || 'bw');
   const [duplex, setDuplex] = useState(jobData.duplex || 'simplex');
   const [pagesPerSheet, setPagesPerSheet] = useState(jobData.pages_per_sheet || 1);
@@ -128,16 +130,17 @@ function OptionsStep({ jobData, onComplete, onBack }) {
         <div className="studio-title-group">
           <h2>
             <BrandMark className="brand-mark" style={{ width: 34, height: 34 }} />
-            Print Studio
+            {t('options.studioTitle')}
           </h2>
           <p className="studio-subtitle">
-            Check the preview, set your print options, and watch the sheet count
-            and price update as you go.
+            {t('options.studioSubtitle')}
           </p>
         </div>
         <div className="doc-meta-badge">
           <span className="doc-meta-filename">{jobData.filename || jobData.original_filename}</span>
-          <span className="doc-meta-pages">{totalDocPages} {totalDocPages === 1 ? 'page' : 'pages'}</span>
+          <span className="doc-meta-pages">
+            {totalDocPages} {totalDocPages === 1 ? t('options.page') : t('options.pages')}
+          </span>
         </div>
       </div>
 
@@ -152,7 +155,7 @@ function OptionsStep({ jobData, onComplete, onBack }) {
                   className={`preview-tab-btn ${previewTab === 'pdf' ? 'active' : ''}`}
                   onClick={() => setPreviewTab('pdf')}
                 >
-                  <span>Original PDF</span>
+                  <span>{t('options.originalPdfTab')}</span>
                   <span className="tab-pill">{totalDocPages}p</span>
                 </button>
 
@@ -162,7 +165,7 @@ function OptionsStep({ jobData, onComplete, onBack }) {
                     className={`preview-tab-btn ai-tab ${previewTab === 'ai' ? 'active' : ''}`}
                     onClick={() => setPreviewTab('ai')}
                   >
-                    <span>AI Summary</span>
+                    <span>{t('options.aiSummaryTab')}</span>
                     <span className="tab-pill">~{Math.max(1, Math.ceil(totalDocPages / 10))}p</span>
                   </button>
                 )}
@@ -176,7 +179,7 @@ function OptionsStep({ jobData, onComplete, onBack }) {
                   className="preview-open-link"
                   title="Open in new window"
                 >
-                  Fullscreen ↗
+                  {t('options.fullscreenBtn')}
                 </a>
               </div>
             </div>
@@ -190,10 +193,12 @@ function OptionsStep({ jobData, onComplete, onBack }) {
                 />
               ) : (
                 <div className="ai-preview-placeholder">
-                  <h4>AI Summary is on</h4>
+                  <h4>{t('options.aiSummaryActiveTitle')}</h4>
                   <p>
-                    Your document will be condensed from <strong>{totalDocPages} pages</strong> to
-                    <strong> ~{Math.max(1, Math.ceil(totalDocPages / 10))} study sheets</strong> with key concepts and formulas highlighted.
+                    {t('options.aiSummaryActiveDesc', {
+                      total: totalDocPages,
+                      summaryPages: Math.max(1, Math.ceil(totalDocPages / 10))
+                    })}
                   </p>
                   {jobData.ai_result_filename ? (
                     <iframe
@@ -203,7 +208,7 @@ function OptionsStep({ jobData, onComplete, onBack }) {
                     />
                   ) : (
                     <div className="ai-summary-will-generate-badge">
-                      Summary generates automatically when you continue
+                      {t('options.aiWillGenerateBadge')}
                     </div>
                   )}
                 </div>
@@ -211,7 +216,7 @@ function OptionsStep({ jobData, onComplete, onBack }) {
             </div>
 
             <div className="preview-footer-info">
-              Scroll and zoom the preview to verify your pages before paying.
+              {t('options.previewFooterInfo')}
             </div>
           </div>
         </section>
@@ -222,8 +227,8 @@ function OptionsStep({ jobData, onComplete, onBack }) {
             {/* 1. Color Mode */}
             <div className="config-group">
               <div className="group-label">
-                <span>Color</span>
-                <span className="group-hint">B&W is recommended for text lectures</span>
+                <span>{t('options.colorLabel')}</span>
+                <span className="group-hint">{t('options.colorHint')}</span>
               </div>
               <div className="segmented-grid segmented-2">
                 <button
@@ -234,8 +239,8 @@ function OptionsStep({ jobData, onComplete, onBack }) {
                 >
                   <span className="nup-icon" aria-hidden="true">B/W</span>
                   <div className="btn-text">
-                    <strong>Black & White</strong>
-                    <span>1.25 EGP / side</span>
+                    <strong>{t('options.bw')}</strong>
+                    <span>{t('options.bwRate')}</span>
                   </div>
                 </button>
 
@@ -247,8 +252,8 @@ function OptionsStep({ jobData, onComplete, onBack }) {
                 >
                   <span className="nup-icon" style={{ background: 'linear-gradient(135deg, #00A3D6, #E5007D, #F5C400)', borderColor: 'var(--line-ink)' }} aria-hidden="true" />
                   <div className="btn-text">
-                    <strong>Full Color</strong>
-                    <span>3.50 EGP / side</span>
+                    <strong>{t('options.color')}</strong>
+                    <span>{t('options.colorRate')}</span>
                   </div>
                 </button>
               </div>
@@ -257,8 +262,8 @@ function OptionsStep({ jobData, onComplete, onBack }) {
             {/* 2. Sides (Duplex) */}
             <div className="config-group">
               <div className="group-label">
-                <span>Sides</span>
-                <span className="eco-pill">Saves 50% paper</span>
+                <span>{t('options.sides')}</span>
+                <span className="eco-pill">{t('options.duplexEco')}</span>
               </div>
               <div className="segmented-grid segmented-2">
                 <button
@@ -269,8 +274,8 @@ function OptionsStep({ jobData, onComplete, onBack }) {
                 >
                   <span className="btn-icon" aria-hidden="true">⇄</span>
                   <div className="btn-text">
-                    <strong>Double-Sided</strong>
-                    <span>Print on both sides</span>
+                    <strong>{t('options.duplex')}</strong>
+                    <span>{t('options.duplexDesc')}</span>
                   </div>
                 </button>
 
@@ -282,8 +287,8 @@ function OptionsStep({ jobData, onComplete, onBack }) {
                 >
                   <span className="btn-icon" aria-hidden="true">▤</span>
                   <div className="btn-text">
-                    <strong>Single-Sided</strong>
-                    <span>One page per sheet</span>
+                    <strong>{t('options.simplex')}</strong>
+                    <span>{t('options.simplexDesc')}</span>
                   </div>
                 </button>
               </div>
@@ -292,8 +297,8 @@ function OptionsStep({ jobData, onComplete, onBack }) {
             {/* 3. Layout: Pages per Sheet (N-Up) */}
             <div className="config-group">
               <div className="group-label">
-                <span>Pages per sheet</span>
-                <span className="group-hint">Compress slides or handouts</span>
+                <span>{t('options.pagesPerSheet')}</span>
+                <span className="group-hint">{t('options.pagesHint')}</span>
               </div>
               <div className="segmented-grid segmented-3">
                 {[1, 2, 4].map((n) => (
@@ -307,7 +312,7 @@ function OptionsStep({ jobData, onComplete, onBack }) {
                     <span className="nup-icon" aria-hidden="true">{n}</span>
                     <div className="btn-text">
                       <strong>{n}-Up</strong>
-                      <span>{n === 1 ? 'Standard' : n === 2 ? 'Side-by-side' : 'Handout grid'}</span>
+                      <span>{n === 1 ? t('options.standard') : n === 2 ? t('options.sideBySide') : t('options.handoutGrid')}</span>
                     </div>
                   </button>
                 ))}
@@ -317,7 +322,7 @@ function OptionsStep({ jobData, onComplete, onBack }) {
             {/* 4. Page Range Selection */}
             <div className="config-group">
               <div className="group-label">
-                <span>Pages</span>
+                <span>{t('options.pageRange')}</span>
               </div>
               <div className="segmented-grid segmented-2">
                 <button
@@ -328,8 +333,8 @@ function OptionsStep({ jobData, onComplete, onBack }) {
                 >
                   <span className="btn-icon" aria-hidden="true">≡</span>
                   <div className="btn-text">
-                    <strong>All Pages</strong>
-                    <span>1 to {totalDocPages}</span>
+                    <strong>{t('options.allPages')}</strong>
+                    <span>{t('options.allPagesDesc', { total: totalDocPages })}</span>
                   </div>
                 </button>
 
@@ -341,8 +346,8 @@ function OptionsStep({ jobData, onComplete, onBack }) {
                 >
                   <span className="btn-icon" aria-hidden="true">✂</span>
                   <div className="btn-text">
-                    <strong>Custom Range</strong>
-                    <span>Pick pages</span>
+                    <strong>{t('options.customRange')}</strong>
+                    <span>{t('options.customRangeDesc')}</span>
                   </div>
                 </button>
               </div>
@@ -352,13 +357,13 @@ function OptionsStep({ jobData, onComplete, onBack }) {
                   <input
                     type="text"
                     className="range-input"
-                    placeholder={`e.g. 1-2, 4 (doc has ${totalDocPages} pages)`}
+                    placeholder={t('options.customRangePlaceholder', { total: totalDocPages })}
                     value={customRange}
                     onChange={(e) => setCustomRange(e.target.value)}
                     aria-label="Custom page range"
                   />
                   <span className="range-feedback">
-                    Selected <strong>{calculation.effectivePages}</strong> of {totalDocPages} pages
+                    {t('options.customRangeFeedback', { effective: calculation.effectivePages, total: totalDocPages })}
                   </span>
                 </div>
               )}
@@ -367,8 +372,8 @@ function OptionsStep({ jobData, onComplete, onBack }) {
             {/* 5. Copies Stepper */}
             <div className="config-group config-group-inline">
               <div className="group-label">
-                <span>Copies</span>
-                <span className="group-hint">For teammates or extra sets</span>
+                <span>{t('options.copies')}</span>
+                <span className="group-hint">{t('options.copiesHint')}</span>
               </div>
               <div className="stepper-box">
                 <button
@@ -399,8 +404,8 @@ function OptionsStep({ jobData, onComplete, onBack }) {
                 <div className="ai-title-row">
                   <AiMark className="ai-mark" />
                   <div>
-                    <strong>AI Study Summarizer</strong>
-                    <p>Condense long lectures into key points and formulas</p>
+                    <strong>{t('options.aiCardTitle')}</strong>
+                    <p>{t('options.aiCardDesc')}</p>
                   </div>
                 </div>
                 <label className="switch">
@@ -422,13 +427,15 @@ function OptionsStep({ jobData, onComplete, onBack }) {
               {aiMode === 'summarize' && (
                 <div className="ai-sub-config">
                   <div className="ai-benefits-row">
-                    <span className="ai-benefit-badge">Saves ~{Math.max(0, totalDocPages - Math.ceil(totalDocPages / 10))} pages</span>
-                    <span className="ai-benefit-badge fee">+2.00 EGP AI fee</span>
+                    <span className="ai-benefit-badge">
+                      {t('options.aiSavesPages', { count: Math.max(0, totalDocPages - Math.ceil(totalDocPages / 10)) })}
+                    </span>
+                    <span className="ai-benefit-badge fee">{t('options.aiFeeBadge')}</span>
                   </div>
                   <input
                     type="text"
                     className="ai-prompt-input"
-                    placeholder='Custom focus (optional, e.g. "Focus on Chapter 4 formulas")'
+                    placeholder={t('options.aiPromptPlaceholder')}
                     value={customPrompt}
                     onChange={(e) => setCustomPrompt(e.target.value)}
                     aria-label="Custom AI focus prompt"
@@ -440,28 +447,30 @@ function OptionsStep({ jobData, onComplete, onBack }) {
             {/* ─── Live Dynamic Receipt & Calculation ─── */}
             <div className="live-summary-card">
               <div className="summary-headline">
-                <span>Calculated summary</span>
+                <span>{t('options.liveSummaryTitle')}</span>
                 {calculation.sheetsSaved > 0 && (
-                  <span className="eco-badge">{calculation.sheetsSaved} sheets saved</span>
+                  <span className="eco-badge">
+                    {t('options.sheetsSavedBadge', { count: calculation.sheetsSaved })}
+                  </span>
                 )}
               </div>
 
               <div className="summary-details-grid">
                 <div className="metric-box">
-                  <span className="metric-label">Content pages</span>
+                  <span className="metric-label">{t('options.contentPagesMetric')}</span>
                   <span className="metric-val">{calculation.effectivePages}</span>
                 </div>
                 <div className="metric-box">
-                  <span className="metric-label">Paper sheets</span>
+                  <span className="metric-label">{t('options.paperSheetsMetric')}</span>
                   <span className="metric-val highlight">{calculation.totalPhysicalSheets}</span>
-                  <span className="metric-sub">{duplex === 'duplex' ? 'Double-sided' : 'Single-sided'}</span>
+                  <span className="metric-sub">{duplex === 'duplex' ? t('options.duplex') : t('options.simplex')}</span>
                 </div>
                 <div className="metric-box">
-                  <span className="metric-label">Copies</span>
+                  <span className="metric-label">{t('options.copiesMetric')}</span>
                   <span className="metric-val">{copies}×</span>
                 </div>
                 <div className="metric-box">
-                  <span className="metric-label">Total price</span>
+                  <span className="metric-label">{t('options.totalPriceMetric')}</span>
                   <span className="metric-val price-val">{calculation.totalPrice.toFixed(2)} EGP</span>
                 </div>
               </div>
@@ -481,7 +490,7 @@ function OptionsStep({ jobData, onComplete, onBack }) {
                 onClick={onBack}
                 disabled={isProcessing}
               >
-                ← Back to upload
+                {t('options.backToUpload')}
               </button>
               <button
                 type="button"
@@ -492,10 +501,10 @@ function OptionsStep({ jobData, onComplete, onBack }) {
                 {isProcessing ? (
                   <>
                     <span className="spinner-small"></span>
-                    Configuring job...
+                    {t('options.configuringJob')}
                   </>
                 ) : (
-                  `Continue to payment (${calculation.totalPrice.toFixed(2)} EGP) →`
+                  t('options.continueToPayment', { price: calculation.totalPrice.toFixed(2) })
                 )}
               </button>
             </div>
