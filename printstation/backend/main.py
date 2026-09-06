@@ -318,20 +318,21 @@ async def update_print_options(
         raise HTTPException(status_code=400, detail="Job options cannot be modified in its current state")
 
     # Handle AI Summarization if requested and not yet done
-    if request.ai_mode == "summarize" and not job.ai_result_filename:
-        try:
-            file_path = get_file_path(job.stored_filename)
-            text = extract_text_from_pdf(file_path)
-            summary, estimated_pages = await summarize_document(
-                text, job.page_count, request.custom_prompt
-            )
-            summary_filename = save_summary_as_text(summary, job.id)
-            job.ai_mode = request.ai_mode
-            job.ai_result_filename = summary_filename
-            job.ai_page_count = estimated_pages
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"AI Processing failed: {str(e)}")
-    elif request.ai_mode == "none":
+    if request.ai_mode == "summarize":
+        job.ai_mode = "summarize"
+        if not job.ai_result_filename:
+            try:
+                file_path = get_file_path(job.stored_filename)
+                text = extract_text_from_pdf(file_path)
+                summary, estimated_pages = await summarize_document(
+                    text, job.page_count, request.custom_prompt
+                )
+                summary_filename = save_summary_as_text(summary, job.id)
+                job.ai_result_filename = summary_filename
+                job.ai_page_count = estimated_pages
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=f"AI Processing failed: {str(e)}")
+    else:
         job.ai_mode = "none"
 
     # Determine effective content pages

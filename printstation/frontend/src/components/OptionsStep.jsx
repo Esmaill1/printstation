@@ -59,16 +59,27 @@ function OptionsStep({ jobData, onComplete, onBack }) {
       effectivePages = parsePageRangeCount(customRange, totalDocPages);
     }
 
-    const rate = colorMode === 'color' ? 3.50 : 1.25;
-    const printedSidesPerCopy = Math.ceil(effectivePages / pagesPerSheet);
-    const sheetsPerCopy = duplex === 'duplex' ? Math.ceil(printedSidesPerCopy / 2) : printedSidesPerCopy;
-    const totalPhysicalSheets = sheetsPerCopy * copies;
+    const nUp = Math.max(1, Number(pagesPerSheet) || 1);
+    const numCopies = Math.max(1, Number(copies) || 1);
+    const printedSidesPerCopy = Math.max(1, Math.ceil(effectivePages / nUp));
 
-    const baseCost = printedSidesPerCopy * copies * rate;
+    // Rate with duplex discount when printing both sides (more than 1 printed side)
+    const isDuplexActive = duplex === 'duplex' && printedSidesPerCopy > 1;
+    let rate;
+    if (colorMode === 'color') {
+      rate = isDuplexActive ? 2.75 : 3.50;
+    } else {
+      rate = isDuplexActive ? 1.00 : 1.25;
+    }
+
+    const sheetsPerCopy = duplex === 'duplex' ? Math.max(1, Math.ceil(printedSidesPerCopy / 2)) : printedSidesPerCopy;
+    const totalPhysicalSheets = sheetsPerCopy * numCopies;
+
+    const baseCost = printedSidesPerCopy * numCopies * rate;
     const aiFee = aiMode === 'summarize' ? 2.00 : 0.00;
-    const totalPrice = Math.max(3.00, Math.round((baseCost + aiFee) * 100) / 100);
+    const totalPrice = Math.max(1.25, Math.round((baseCost + aiFee) * 100) / 100);
 
-    const standardTotalSheets = totalDocPages * copies;
+    const standardTotalSheets = totalDocPages * numCopies;
     const sheetsSaved = Math.max(0, standardTotalSheets - totalPhysicalSheets);
 
     return {
@@ -80,6 +91,7 @@ function OptionsStep({ jobData, onComplete, onBack }) {
       aiFee,
       totalPrice,
       sheetsSaved,
+      isDuplexActive,
     };
   }, [totalDocPages, colorMode, duplex, pagesPerSheet, pageSelectionType, customRange, copies, aiMode]);
 

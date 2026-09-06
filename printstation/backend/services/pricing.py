@@ -5,10 +5,12 @@ from collections import namedtuple
 import math
 
 # Pricing configuration (EGP)
-PRICE_PER_PAGE_BW = 1.25        # Black & white rate
-PRICE_PER_PAGE_COLOR = 3.50     # Full color rate
-PRICE_AI_SUMMARIZE = 2.00       # Flat fee for AI summarization
-MINIMUM_CHARGE = 3.00           # Minimum job charge
+PRICE_PER_PAGE_BW = 1.25          # Black & white (single-sided)
+PRICE_PER_PAGE_BW_DUPLEX = 1.00   # Black & white (double-sided discount)
+PRICE_PER_PAGE_COLOR = 3.50       # Full color (single-sided)
+PRICE_PER_PAGE_COLOR_DUPLEX = 2.75 # Full color (double-sided discount)
+PRICE_AI_SUMMARIZE = 2.00         # Flat fee for AI summarization
+MINIMUM_CHARGE = 1.25             # Minimum job charge (1 B&W page)
 
 # Named tuple allowing backwards-compatible unpacking: (price_per_page, total_price, ...)
 PriceResult = namedtuple(
@@ -80,12 +82,19 @@ def calculate_price(
         PriceResult(price_per_page, total_price, physical_sheets, total_physical_sheets, pages_saved, ai_fee, base_cost)
     """
     copies = max(1, copies)
-    rate_per_page = PRICE_PER_PAGE_COLOR if color_mode == "color" else PRICE_PER_PAGE_BW
     n_up = max(1, pages_per_sheet)
+    effective_pages = max(1, page_count)
     
     # Printed sides needed per copy after N-Up layout
-    printed_sides = max(1, math.ceil(page_count / n_up))
+    printed_sides = max(1, math.ceil(effective_pages / n_up))
     
+    # Rate per side: apply duplex discount when printing on both sides (more than 1 printed side)
+    is_duplex_active = duplex == "duplex" and printed_sides > 1
+    if color_mode == "color":
+        rate_per_page = PRICE_PER_PAGE_COLOR_DUPLEX if is_duplex_active else PRICE_PER_PAGE_COLOR
+    else:
+        rate_per_page = PRICE_PER_PAGE_BW_DUPLEX if is_duplex_active else PRICE_PER_PAGE_BW
+
     # Physical sheets of paper per copy
     if duplex == "duplex":
         physical_sheets = max(1, math.ceil(printed_sides / 2))
@@ -94,17 +103,17 @@ def calculate_price(
         
     total_physical_sheets = physical_sheets * copies
     
-    # Base cost is calculated on sides printed
+    # Base cost is calculated on sides printed * copies * rate_per_page
     base_cost = printed_sides * copies * rate_per_page
     
     # AI fee
     ai_fee = PRICE_AI_SUMMARIZE if ai_mode == "summarize" else 0.0
     
-    # Total calculation with minimum charge
-    total = max(base_cost + ai_fee, MINIMUM_CHARGE)
+    # Total calculation with minimum charge (1 page B&W)
+    total = max(round(base_cost + ai_fee, 2), MINIMUM_CHARGE)
     
     # Pages saved compared to standard single-sided 1-up
-    standard_sheets = page_count * copies
+    standard_sheets = effective_pages * copies
     pages_saved = max(0, standard_sheets - total_physical_sheets)
     
     return PriceResult(
