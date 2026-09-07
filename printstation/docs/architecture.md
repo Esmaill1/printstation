@@ -87,6 +87,7 @@ PrintStation follows a **three-tier client-server architecture** connecting stud
 | PDF Processing | pypdf | Page counting, text extraction |
 | AI | Google Gemini API | Generous free tier, good Arabic support |
 | File Storage | Local filesystem (prototype) → S3/GCS (production) | Simple for dev |
+| Auth | Clerk (hosted auth) | No custom auth code, prebuilt UI, JWT verification only |
 | Server | Uvicorn | ASGI server for FastAPI |
 
 ### Kiosk Agent
@@ -217,9 +218,26 @@ GET  /api/kiosk/config     → Fetch kiosk configuration
 ### Core Tables
 
 ```sql
+-- Users (synced from Clerk)
+-- Clerk handles auth (login, signup, passwords, OAuth).
+-- This table stores only app-specific data + Clerk reference.
+CREATE TABLE users (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    clerk_id        TEXT UNIQUE NOT NULL,   -- Clerk's user ID (e.g., "user_2x...")
+    name            TEXT,
+    email           TEXT,
+    phone           TEXT,
+    university      TEXT,
+    role            TEXT DEFAULT 'student', -- 'student' | 'admin'
+    total_prints    INTEGER DEFAULT 0,
+    total_spent     REAL DEFAULT 0.0,
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Print Jobs
 CREATE TABLE print_jobs (
     id                INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id           INTEGER REFERENCES users(id),  -- NULL = anonymous (Phase 1)
     original_filename TEXT NOT NULL,
     stored_filename   TEXT NOT NULL,
     page_count        INTEGER NOT NULL,
@@ -247,7 +265,7 @@ CREATE TABLE print_jobs (
     completed_at      TIMESTAMP
 );
 
--- Kiosks (Phase 2+)
+-- Kiosks
 CREATE TABLE kiosks (
     id          TEXT PRIMARY KEY,
     name        TEXT NOT NULL,
@@ -260,6 +278,23 @@ CREATE TABLE kiosks (
     created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 ```
+
+### Authentication Strategy (Clerk)
+
+Clerk is used as a **hosted authentication provider**. We do NOT build login/signup ourselves.
+
+| Concern | How Clerk Handles It |
+|---|---|
+| Signup / Login UI | Clerk's prebuilt `<SignIn />` and `<SignUp />` React components |
+| Password hashing | Clerk (we never see passwords) |
+| OAuth (Google, etc.) | Clerk supports it out of the box |
+| Session management | Clerk issues JWTs, frontend SDK handles refresh |
+| Backend verification | Verify Clerk JWT on protected endpoints using `clerk-backend-api` or manual JWKS |
+| User data sync | On first login, create a row in `users` table with `clerk_id` |
+
+**Phase 1**: Anonymous uploads (no auth required). Clerk is configured but optional.  
+**Phase 2**: Clerk enforced — students must log in to upload. `user_id` linked to print jobs.  
+**Phase 3**: Admin role via Clerk metadata → access to admin dashboard.
 
 ---
 
@@ -325,8 +360,9 @@ CREATE TABLE kiosks (
 
 - Rate limiting per IP
 - API key authentication for kiosk agents
-- JWT tokens for user sessions
+- Clerk JWT verification for student sessions (no custom auth code)
 - Input validation on all endpoints (Pydantic schemas)
+- Clerk webhook to sync user data on signup/update
 
 ---
 

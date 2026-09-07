@@ -10,8 +10,8 @@
 | Phase | Method |
 |---|---|
 | Prototype | No authentication (anonymous uploads) |
-| Phase 2 | JWT Bearer tokens for students, API keys for kiosks |
-| Phase 3 | OAuth 2.0 + API keys |
+| Phase 2 | Clerk JWT (students), API keys (kiosks) |
+| Phase 3 | Clerk JWT + role-based access (admin dashboard) |
 
 ---
 
