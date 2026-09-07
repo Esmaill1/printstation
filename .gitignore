@@ -75,11 +75,11 @@ $RECYCLE.BIN/
 
 # Test screenshots, temporary media, and sample generated files
 *.png
-!frontend/src/assets/*.png
-!frontend/public/*.png
+!src/assets/*.png
+!public/*.png
 *.webp
-!frontend/src/assets/*.webp
-!frontend/public/*.webp
+!src/assets/*.webp
+!public/*.webp
 sample_*.pdf
 test_output/
 debug_*.png
