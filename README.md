@@ -3,7 +3,7 @@
 > **Cloud-based, AI-powered self-service printing kiosk system.**  
 > Upload → Pay → Print. Like an ATM, but for printing.
 
-PrintStation eliminates the copy-shop bottleneck by combining self-service printing hardware with AI-powered document intelligence — summarizing lectures, generating flashcards, and cleaning up whiteboard photos before printing.
+PrintStation eliminates the copy-shop bottleneck by combining self-service printing hardware with AI-powered document intelligence — summarizing lectures, generating flashcards, and cleaning up whiteboard photos before printing..
 
 ---
 
