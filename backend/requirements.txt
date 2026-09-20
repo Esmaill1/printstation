@@ -1,0 +1,15 @@
+# Core
+fastapi==0.115.*
+uvicorn[standard]==0.32.*
+pydantic-settings==2.*
+sqlalchemy==2.*
+psycopg2-binary==2.*
+
+# PDF processing
+pypdf==5.*
+
+# AI (optional — only needed when GEMINI_API_KEY is set)
+google-generativeai==0.8.*
+
+# Utilities
+python-multipart==0.0.*

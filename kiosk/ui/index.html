@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>PrintStation Kiosk</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --border: #334155;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      user-select: none;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .header h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      letter-spacing: -1px;
+      background: linear-gradient(135deg, #60a5fa, #3b82f6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .header p {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      margin-top: 6px;
+    }
+    .kiosk-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+    .code-display {
+      background: #0f172a;
+      border: 2px solid var(--primary);
+      border-radius: 12px;
+      padding: 18px;
+      text-align: center;
+      font-size: 2.2rem;
+      font-weight: 700;
+      letter-spacing: 12px;
+      color: #38bdf8;
+      min-height: 75px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+    .keypad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    .key-btn {
+      background: #334155;
+      color: var(--text);
+      border: none;
+      border-radius: 12px;
+      font-size: 1.6rem;
+      font-weight: 600;
+      height: 64px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .key-btn:active {
+      transform: scale(0.95);
+      background: var(--primary);
+    }
+    .key-btn.action-btn {
+      font-size: 1.1rem;
+      background: #475569;
+    }
+    .submit-btn {
+      margin-top: 16px;
+      width: 100%;
+      height: 56px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.25rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .submit-btn:disabled {
+      background: #334155;
+      color: #64748b;
+      cursor: not-allowed;
+    }
+    .status-msg {
+      margin-top: 16px;
+      text-align: center;
+      font-size: 1rem;
+      min-height: 24px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>PrintStation Kiosk</h1>
+    <p>Enter your 6-digit pickup code to print</p>
+  </div>
+
+  <div class="kiosk-card">
+    <div id="codeDisplay" class="code-display">______</div>
+
+    <div class="keypad">
+      <button class="key-btn" onclick="pressDigit('1')">1</button>
+      <button class="key-btn" onclick="pressDigit('2')">2</button>
+      <button class="key-btn" onclick="pressDigit('3')">3</button>
+      <button class="key-btn" onclick="pressDigit('4')">4</button>
+      <button class="key-btn" onclick="pressDigit('5')">5</button>
+      <button class="key-btn" onclick="pressDigit('6')">6</button>
+      <button class="key-btn" onclick="pressDigit('7')">7</button>
+      <button class="key-btn" onclick="pressDigit('8')">8</button>
+      <button class="key-btn" onclick="pressDigit('9')">9</button>
+      <button class="key-btn action-btn" onclick="clearCode()">Clear</button>
+      <button class="key-btn" onclick="pressDigit('0')">0</button>
+      <button class="key-btn action-btn" onclick="backspace()">⌫</button>
+    </div>
+
+    <button id="submitBtn" class="submit-btn" disabled onclick="submitCode()">Print Document</button>
+    <div id="statusMsg" class="status-msg"></div>
+  </div>
+
+  <script>
+    let code = "";
+    const display = document.getElementById("codeDisplay");
+    const submitBtn = document.getElementById("submitBtn");
+    const statusMsg = document.getElementById("statusMsg");
+
+    function updateDisplay() {
+      display.textContent = (code + "______").slice(0, 6).split("").join(" ");
+      submitBtn.disabled = code.length !== 6;
+    }
+
+    function pressDigit(digit) {
+      if (code.length < 6) {
+        code += digit;
+        updateDisplay();
+      }
+    }
+
+    function clearCode() {
+      code = "";
+      updateDisplay();
+      statusMsg.textContent = "";
+    }
+
+    function backspace() {
+      code = code.slice(0, -1);
+      updateDisplay();
+      statusMsg.textContent = "";
+    }
+
+    async function submitCode() {
+      if (code.length !== 6) return;
+      statusMsg.textContent = "Connecting to printer agent...";
+      statusMsg.style.color = "#38bdf8";
+
+      try {
+        // Look up job from backend or local agent
+        const res = await fetch(`http://localhost:8000/api/kiosk/jobs/lookup?code=${code}`);
+        if (!res.ok) {
+          throw new Error("Job not found or already printed");
+        }
+        const job = await res.json();
+        statusMsg.textContent = `Found: ${job.filename} (${job.page_count} pages). Printing...`;
+        statusMsg.style.color = "#4ade80";
+
+        // Claim & print trigger
+        setTimeout(() => {
+          clearCode();
+          statusMsg.textContent = "Done! Collect your printed document.";
+        }, 3000);
+      } catch (err) {
+        statusMsg.textContent = err.message || "Failed to process code.";
+        statusMsg.style.color = "#f87171";
+      }
+    }
+
+    updateDisplay();
+  </script>
+</body>
+</html>
