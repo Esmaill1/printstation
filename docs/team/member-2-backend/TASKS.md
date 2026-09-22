@@ -82,8 +82,11 @@ A production-ready, high-throughput FastAPI backend server connected to PostgreS
   - Verify and decode JWT tokens.
   - Inject current `User` instance into FastAPI route dependencies (`Depends(get_current_user)`).
 
-### 3. File Processing & Pricing Engine
-- [ ] Implement `POST /api/upload` supporting PDF and DOCX conversion.
+### 3. File Processing, Routes & Pricing Engine
+- [ ] Implement `POST /api/upload` supporting PDF, DOCX, PPTX, TXT, MD, and image conversion.
+- [ ] Implement `POST /api/jobs/ocr-organize` — receive image upload, call `ai_service.ocr_to_study_guide()`, return organized study guide job.
+- [ ] Implement `POST /api/jobs/{id}/options` — receive print config (color, duplex, N-up, page range, copies, orientation), run pricing engine, return itemized price breakdown.
+- [ ] Implement `GET /api/jobs/{id}` — return full job status, settings, pickup code, QR token, and timestamps.
 - [ ] Implement `services/pricing.py`:
   - Complex page range parser.
   - Duplex, N-up, copies, and AI fee calculation.
@@ -114,9 +117,7 @@ A production-ready, high-throughput FastAPI backend server connected to PostgreS
 
 > **See full specs**: [`docs/api-reference.md` → Admin Endpoints](file:///d:/Projects/printstation/docs/api-reference.md)
 
-### 8. Student-Facing API Gaps (for Member 1 Frontend)
-- [ ] Implement `GET /api/user/jobs` — paginated print history for authenticated students.
-- [ ] Implement `GET /api/jobs/{id}/receipt` — stream ReportLab PDF invoice for a completed job.
+### 8. Student-Facing API (for Member 1 Frontend)
 - [ ] Implement `POST /api/jobs/{id}/reprint` — re-create a job from a past print for re-payment.
 - [ ] Implement `GET /api/user/wallet` — return current student wallet balance.
 - [ ] Implement `POST /api/user/wallet/topup` — initiate wallet top-up via Paymob.
@@ -124,6 +125,7 @@ A production-ready, high-throughput FastAPI backend server connected to PostgreS
 - [ ] Update `POST /api/jobs/{id}/pay` — return `redirect_url` for non-instant payment methods (card, vodafone_cash, fawry).
 - [ ] Update `POST /api/jobs/{id}/ai` — expand `mode` to accept `"key_points"`, `"study_notes"`, `"exam_prep"`, `"custom"` (not just `"summarize"`).
 
+> `GET /api/user/jobs` and `GET /api/jobs/{id}/receipt` are already covered in Section 5 above.
 > **See full specs**: [`docs/api-reference.md` → Student Endpoints](file:///d:/Projects/printstation/docs/api-reference.md)
 
 ---

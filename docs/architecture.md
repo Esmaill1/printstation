@@ -160,7 +160,7 @@ sides = ceil(effective_pages / pages_per_sheet)
 sheets = ceil(sides / 2) if duplex else sides
 rate = 3.50 if color else 1.25
 base_cost = sides * copies * rate
-ai_fee = 2.00 if ai_mode == 'summarize' else 0.00
+ai_fee = 2.00 if ai_mode != 'none' else 0.00  # ai_mode: none | key_points | study_notes | exam_prep | custom
 total_price = max(3.00, base_cost + ai_fee)
 ```
 
@@ -195,8 +195,8 @@ Capabilities:
 
 **Production**: Paymob integration with webhook callbacks:
 ```
-POST /api/jobs/{id}/pay → Create Paymob payment intent
-POST /api/webhooks/paymob → Handle payment confirmation callback
+POST /api/jobs/{id}/pay → Create Paymob payment intent (returns redirect_url for card/wallet)
+POST /api/payments/webhook → Handle Paymob HMAC-verified payment confirmation callback
 ```
 
 ### 3.5 Queue Service
@@ -205,15 +205,19 @@ POST /api/webhooks/paymob → Handle payment confirmation callback
 
 **Job states**: `uploaded → processing → ready_to_pay → paid → queued → printing → printed → dispensed`
 
-**Kiosk polling**:
+**Kiosk job retrieval** (code-based lookup, not assignment-based polling):
 ```
-GET /api/kiosk/next-job?kiosk_id=XX
-  → Return next paid job assigned to this kiosk
+GET /api/kiosk/jobs/lookup?code=A7K3M2
+  → Return matching paid job details
+  → Kiosk displays confirmation screen
+
+POST /api/kiosk/jobs/{id}/claim
+  → Atomically lock job for this kiosk (prevents double-printing)
   → Mark as "printing"
 
 POST /api/kiosk/jobs/{id}/status
   → Update job status (printed / failed)
-  → If failed, increment retry count
+  → If failed, triggers automatic refund
 ```
 
 ### 3.6 Kiosk Service
@@ -242,6 +246,7 @@ CREATE TABLE users (
     email           TEXT,
     phone           TEXT,
     university      TEXT,
+    wallet_balance  REAL DEFAULT 0.0,
     role            TEXT DEFAULT 'student', -- 'student' | 'admin'
     total_prints    INTEGER DEFAULT 0,
     total_spent     REAL DEFAULT 0.0,
@@ -265,11 +270,12 @@ CREATE TABLE print_jobs (
     page_range        TEXT DEFAULT 'all',
     copies            INTEGER DEFAULT 1,
     orientation       TEXT DEFAULT 'portrait',
-    ai_mode           TEXT DEFAULT 'none',   -- 'none' | 'summarize'
+    ai_mode           TEXT DEFAULT 'none',   -- 'none' | 'key_points' | 'study_notes' | 'exam_prep' | 'custom'
     ai_result_filename TEXT,
     custom_prompt     TEXT,
     status            TEXT NOT NULL DEFAULT 'uploaded',
     pickup_code       TEXT UNIQUE,
+    qr_token          TEXT UNIQUE,
     kiosk_id          TEXT,
     payment_method    TEXT,
     payment_ref       TEXT,
@@ -288,6 +294,7 @@ CREATE TABLE kiosks (
     printer_model TEXT,
     paper_level INTEGER,
     toner_level INTEGER,
+    maintenance_mode BOOLEAN DEFAULT FALSE,
     last_heartbeat TIMESTAMP,
     created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -318,32 +325,43 @@ Clerk is used as a **hosted authentication provider**. We do NOT build login/sig
 
 | Method | Path | Description |
 |---|---|---|
-| POST | `/api/upload` | Upload PDF file |
-| POST | `/api/jobs/{id}/options` | Set print options |
-| POST | `/api/jobs/{id}/ai` | Apply AI processing |
-| GET  | `/api/jobs/{id}` | Get job status |
-| GET  | `/api/jobs/{id}/preview` | Serve PDF for preview |
-| GET  | `/api/jobs/{id}/ai-preview` | Serve AI summary preview |
-| POST | `/api/jobs/{id}/pay` | Process payment |
+| POST | `/api/upload` | Upload any file (PDF, DOCX, PPTX, TXT, Images) |
+| POST | `/api/jobs/ocr-organize` | Upload image for OCR → organized study guide |
+| POST | `/api/jobs/{id}/options` | Set print options (color, duplex, N-up, range) |
+| POST | `/api/jobs/{id}/ai` | Apply AI processing (key_points / study_notes / exam_prep / custom) |
+| GET  | `/api/jobs/{id}` | Get job status, settings, pickup code, QR token |
+| GET  | `/api/jobs/{id}/preview` | Serve PDF for in-browser preview |
+| GET  | `/api/jobs/{id}/ai-preview` | Serve AI summary text preview |
+| POST | `/api/jobs/{id}/pay` | Process payment (instant or redirect) |
+| GET  | `/api/user/jobs` | Paginated print history for authenticated user |
+| GET  | `/api/jobs/{id}/receipt` | Download PDF receipt/invoice |
+| POST | `/api/jobs/{id}/reprint` | Re-create a past job for re-payment |
+| GET  | `/api/user/wallet` | Get student wallet balance |
+| POST | `/api/user/wallet/topup` | Initiate wallet top-up via Paymob |
+| GET  | `/api/kiosks` | Public list of kiosk locations and statuses |
 
 ### Kiosk Endpoints
 
 | Method | Path | Description |
 |---|---|---|
-| GET  | `/api/kiosk/jobs/lookup?code=XXXXXX` | Look up job by pickup code |
-| POST | `/api/kiosk/jobs/{id}/claim` | Claim job for printing |
-| GET  | `/api/kiosk/jobs/{id}/download` | Download PDF file |
-| POST | `/api/kiosk/jobs/{id}/status` | Update print status |
-| GET  | `/api/kiosk/printers` | List available printers |
+| GET  | `/api/kiosk/jobs/lookup?code=XXXXXX` | Look up job by pickup code or QR token |
+| POST | `/api/kiosk/jobs/{id}/claim` | Atomically claim job for printing |
+| GET  | `/api/kiosk/jobs/{id}/download` | Download PDF file for printing |
+| POST | `/api/kiosk/jobs/{id}/status` | Update print status (printed / failed) |
+| GET  | `/api/kiosk/printers` | List available CUPS printers |
+| POST | `/api/kiosk/heartbeat` | Report kiosk telemetry (paper, toner, status) |
 
-### Admin Endpoints (Phase 3)
+### Admin Endpoints
 
 | Method | Path | Description |
 |---|---|---|
-| GET  | `/api/stats` | System statistics |
-| GET  | `/api/admin/jobs` | List all jobs with filters |
-| GET  | `/api/admin/kiosks` | List all kiosks |
-| POST | `/api/admin/kiosks/{id}/restart` | Remote kiosk restart |
+| GET  | `/api/admin/kiosks` | Fleet status (all kiosks with telemetry) |
+| POST | `/api/admin/kiosks/{id}/maintenance` | Toggle kiosk maintenance mode |
+| GET  | `/api/admin/jobs` | Paginated job queue with filters |
+| GET  | `/api/admin/stats?period=week` | Business metrics (revenue, pages, AI adoption) |
+| POST | `/api/admin/jobs/{id}/reprint` | Operator manual reprint |
+| POST | `/api/admin/jobs/{id}/refund` | Operator manual refund |
+| GET  | `/api/stats` | Legacy basic statistics |
 
 ---
 

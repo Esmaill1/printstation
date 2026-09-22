@@ -186,6 +186,8 @@ Smartphone Photo (Handwritten notes / Whiteboard)
 
 **Tech stack**: Gemini 2.0 Flash (Multimodal Vision + Structuring), ReportLab, Pillow
 
+**API Endpoint**: `POST /api/jobs/ocr-organize` — Member 2 creates the route in `main.py`; it calls Member 4's `ai_service.ocr_to_study_guide(image_path)` and returns the organized study guide job.
+
 
 ## 4. Phase 2: Flashcard Generator (اعمل كروت مذاكرة)
 

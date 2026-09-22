@@ -136,9 +136,10 @@ Student approaches kiosk
 
 | Entity | Key Fields |
 |---|---|
-| **PrintJob** | id, original_filename, stored_filename, page_count, total_price, status, pickup_code, color_mode, duplex, pages_per_sheet, ai_mode, kiosk_id, created_at, completed_at |
+| **User** | id, clerk_user_id, email, name, wallet_balance, role, created_at |
+| **PrintJob** | id, user_id, original_filename, stored_filename, page_count, total_price, status, pickup_code, qr_token, color_mode, duplex, pages_per_sheet, ai_mode, kiosk_id, payment_method, created_at, paid_at, completed_at |
 | **Payment** | id, job_id, amount, method, provider_ref, status, paid_at |
-| **Kiosk** | id, name, location, status (online/offline/error), printer_model, paper_level, toner_level |
+| **Kiosk** | id, name, location, status (online/offline/error), printer_model, paper_level, toner_level, maintenance_mode, last_heartbeat |
 
 ### 4.4 Job Status Lifecycle
 
@@ -151,7 +152,9 @@ uploaded → processing → ready_to_pay → paid → queued → printing → pr
 
 ## 5. Feature Specification
 
-### 5.1 Prototype Features (Phase 1)
+### 5.1 Production Features (Full Sprint)
+
+> **Note**: The original phased roadmap has been collapsed into a single production sprint. All features below are Day 1 deliverables.
 
 #### Web App
 
@@ -159,13 +162,17 @@ uploaded → processing → ready_to_pay → paid → queued → printing → pr
 |---|---|---|---|
 | W-01 | Universal File Ingestion | P0 | Drag-and-drop or camera file picker for PDF, DOCX, PPTX, TXT, and Images (JPG/PNG/HEIC), max 50MB |
 | W-02 | Page Count & Pricing | P0 | Automatic page detection, real-time price calculation |
-| W-03 | Print Options | P0 | Color mode (B&W/Color), duplex, pages-per-sheet, page range, copies |
+| W-03 | Print Options | P0 | Color mode (B&W/Color), duplex, pages-per-sheet, page range, copies, orientation |
 | W-04 | Document Preview | P0 | In-browser PDF preview with page navigation, zoom, and print simulation |
-| W-05 | Multi-Method Payment | P0 | Paymob: Cards, Mobile Wallets (Vodafone Cash), Fawry, and Student Wallet |
+| W-05 | Multi-Method Payment | P0 | Paymob: Cards, Mobile Wallets (Vodafone Cash, Orange, Etisalat), Fawry, and Student Wallet |
 | W-06 | Dual Pickup Code & QR | P0 | 6-digit alphanumeric code + dynamic QR code for touchless scanning |
 | W-07 | Job Status | P0 | Real-time status tracking (paid → printing → done) |
-| W-08 | AI Summarize & Print | P1 | Upload document → Gemini summary → print condensed version |
-| W-09 | Image OCR to Organized Notes | P1 | Upload photo of lecture notes/whiteboard → extract & organize into structured study guide |
+| W-08 | AI Summarize & Print | P0 | 4-mode summarizer (Key Points, Study Notes, Exam Prep, Custom) via Gemini |
+| W-09 | Image OCR to Organized Notes | P0 | Upload photo of lecture notes/whiteboard → extract & organize into structured study guide |
+| W-10 | Clerk Authentication | P0 | Google & Email sign-in, JWT token injection, guest checkout |
+| W-11 | Print History & Receipts | P0 | "My Prints" page, PDF receipt download, one-click re-print |
+| W-12 | Bilingual Arabic & English | P0 | Full RTL layout flip with Arabic typography |
+| W-13 | Progressive Web App | P0 | Manifest, service worker, "Add to Home Screen" prompt |
 
 #### Backend API
 
@@ -175,12 +182,16 @@ uploaded → processing → ready_to_pay → paid → queued → printing → pr
 | B-02 | PDF Page Counting | P0 | Extract page count using pypdf |
 | B-03 | Pricing Engine | P0 | Calculate price based on pages, color, duplex, N-up, AI fees |
 | B-04 | Pickup Code & QR Token Generation | P0 | Random 6-digit code + signed QR token |
-| B-05 | Job Queue & State Machine | P0 | Assign jobs to kiosks, track status transitions |
+| B-05 | Job Queue & State Machine | P0 | Track status transitions, assign jobs to kiosks |
 | B-06 | Payment Processing & Refunds | P0 | Paymob payment intent, HMAC webhook verification, automatic failure refunds |
 | B-07 | Kiosk Fleet API | P0 | Endpoints for kiosk code/QR lookup, job claiming, status updates, heartbeats |
-| B-08 | AI Summarization | P1 | Text extraction → Gemini API → summary text output |
+| B-08 | AI Summarization (4 modes) | P0 | Text extraction → Gemini API → key_points / study_notes / exam_prep / custom |
 | B-09 | File Serving | P0 | Serve uploaded PDFs for preview and kiosk download |
-| B-10 | Multimodal Image OCR & Structuring | P1 | Gemini Vision OCR + LLM formatting of handwritten notes into printable PDF |
+| B-10 | Multimodal Image OCR & Structuring | P0 | Gemini Vision OCR + LLM formatting of handwritten notes into printable PDF |
+| B-11 | Clerk Authentication & User Sync | P0 | JWT verification via JWKS, auto-register users, guest fallback |
+| B-12 | Print History & Receipt Generation | P0 | Paginated history, ReportLab PDF invoice download |
+| B-13 | Student Wallet | P0 | Balance check, top-up via Paymob, one-tap payment |
+| B-14 | Admin Dashboard API | P0 | Fleet status, job queue, business metrics, maintenance toggle, manual refund/reprint |
 
 
 #### Kiosk Agent
@@ -194,39 +205,18 @@ uploaded → processing → ready_to_pay → paid → queued → printing → pr
 | K-05 | Status Reporting | P0 | Report print success/failure back to backend |
 | K-06 | Virtual Printer | P0 | Simulated printer for development without hardware |
 
-### 5.2 Phase 2 Features (After 50+ Users)
+### 5.2 Future Features (Post-Launch)
 
 | ID | Feature | Category |
 |---|---|---|
-| P2-01 | User accounts & login | Web App |
-| P2-02 | DOCX / PPTX → PDF conversion | Backend |
-| P2-03 | Multiple payment methods (Fawry + VodaCash + InstaPay) | Payment |
-| P2-04 | Print history & receipts | Web App |
-| P2-05 | Arabic UI (bilingual) | Web App |
-| P2-06 | SMS/Push notifications ("print ready") | Backend |
-| P2-07 | QR code scanning at kiosk | Kiosk |
-| P2-08 | Automatic refunds for failed prints | Backend |
-| P2-09 | AI: Photo → Clean Document | AI |
-| P2-10 | AI: Flashcard Generator | AI |
-| P2-11 | AI: OCR for scanned documents | AI |
-| P2-12 | AI: Smart print defaults | AI |
-
-### 5.3 Phase 3 Features (Scaling)
-
-| ID | Feature | Category |
-|---|---|---|
-| P3-01 | Admin dashboard with real-time monitoring | Admin |
-| P3-02 | Remote kiosk management (restart, update, logs) | Admin |
-| P3-03 | Paper & toner level sensors | Kiosk |
-| P3-04 | Physical metal enclosure (lockable, ventilated) | Hardware |
-| P3-05 | Multi-kiosk management | Admin |
-| P3-06 | Analytics & revenue dashboards | Admin |
-| P3-07 | A3 / Color printing support | Hardware |
-| P3-08 | Wallet / pre-loaded credit system | Payment |
-| P3-09 | AI: Smart slide layout | AI |
-| P3-10 | AI: Assignment formatter | AI |
-| P3-11 | AI: Translation & print | AI |
-| P3-12 | AI: Predictive maintenance | AI |
+| F-01 | SMS/Push notifications ("print ready") | Backend |
+| F-02 | AI: Smart print defaults (auto-detect doc type) | AI |
+| F-03 | Physical metal enclosure (lockable, ventilated) | Hardware |
+| F-04 | A3 / Color printing support | Hardware |
+| F-05 | AI: Smart slide layout (mixed N-up per slide) | AI |
+| F-06 | AI: Assignment formatter | AI |
+| F-07 | AI: Translation & print | AI |
+| F-08 | AI: Predictive maintenance | AI |
 
 ---
 
@@ -251,7 +241,8 @@ where:
   sides = ceil(effective_pages / pages_per_sheet)
   effective_pages = page_range_count or total_pages
   rate = 1.25 (B&W) or 3.50 (Color)
-  ai_fee = 2.00 (if AI mode enabled) or 0.00
+  ai_fee = 2.00 (if ai_mode != 'none') or 0.00
+  ai_mode = 'none' | 'key_points' | 'study_notes' | 'exam_prep' | 'custom'
 ```
 
 ---
@@ -323,7 +314,7 @@ where:
 
 | Area | Requirement |
 |---|---|
-| File uploads | PDF-only validation, 50MB limit, virus scan (Phase 2) |
+| File uploads | File type whitelist validation (PDF, DOCX, PPTX, TXT, MD, JPG, PNG, WEBP, HEIC), 50MB limit, virus scan (future) |
 | Pickup codes | 6-digit, expire after 24 hours, single-use |
 | Payment | HTTPS only, Paymob PCI compliance |
 | API | Rate limiting (Phase 2), CORS restricted |
