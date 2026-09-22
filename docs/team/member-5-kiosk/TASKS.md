@@ -1,255 +1,82 @@
-# Member 5 — IoT & Kiosk Engineer
+# Member 5 — Kiosk & Hardware Engineer
 
-> **Role**: The physical world — Raspberry Pi, printer, touchscreen, and the kiosk agent daemon.  
-> **Tech Stack**: Python 3.11+, CUPS, systemd, Chromium kiosk mode (HTML/JS), Raspberry Pi OS  
-> **Academic Coverage**: IoT / Distributed Systems — Raspberry Pi as edge node, hardware integration
-
----
-
-## Phase 0 — Validation (Before Phase 1)
-
-- [ ] **Test printer with CUPS on Raspberry Pi BEFORE purchasing**
-  - Borrow or get a test printer
-  - Install CUPS on RPi
-  - Verify: `lp -d <printer> test.pdf` works
-  - Test duplex: `lp -o sides=two-sided-long-edge test.pdf`
-  - Test N-up: `lp -o number-up=2 test.pdf`
-  - If it fails → try another printer model
-  - Ref: Hardware Guide §2
-- [ ] **Procure hardware** (see Bill of Materials)
-  - Laser printer (Brother HL-L2350DW recommended): 8,000–15,000 EGP
-  - Raspberry Pi 4 (4GB RAM): 3,000–5,000 EGP
-  - Official RPi USB-C PSU: 300–500 EGP
-  - 32GB microSD card (SanDisk): 200–400 EGP
-  - 7" touchscreen display: 2,000–4,000 EGP
-  - USB-A to USB-B cable (printer): 50–100 EGP
-  - Ethernet cable (backup): 50–100 EGP
-  - Ref: Hardware Guide §1
-- [ ] **Get university approval** for kiosk placement
-  - Identify location (library, common area, near power outlet)
-  - Written agreement with university administration
-  - Ref: Business Plan §6
+> **Role**: The physical station — Raspberry Pi daemon, CUPS printer control, and touchscreen kiosk interface.  
+> **Tech Stack**: Python (Daemon), CUPS (`lp` commands), HTML5/JS Touchscreen UI, Chromium Kiosk Mode, systemd  
+> **Sprint Timeline**: 3 Days (AI-Accelerated)
 
 ---
 
-## Phase 1 — Prototype (Weeks 1–6)
+## 🎯 FINAL RESULT DELIVERABLE
 
-### Week 1–2: Raspberry Pi Setup
+A complete, self-contained Kiosk software bundle in `kiosk/` that:
+1. Displays a full-screen, touch-friendly UI (`kiosk/ui/index.html`) with a large numeric keypad, 6-digit code input, job verification screen, and printing animation.
+2. Runs a background agent (`kiosk/agent.py`) that queries the backend, claims the job, securely downloads the PDF, sends it to the printer via CUPS (`lp`), confirms print completion back to the backend, and wipes local temp files.
+3. Sends heartbeats every 30s reporting kiosk status (online, paper level, toner level).
+4. Includes an automatic **simulation mode** so the entire team can test printing on Windows/Mac laptops without physical hardware.
 
-- [ ] **Flash Raspberry Pi OS** (64-bit Lite recommended)
-  - Use Raspberry Pi Imager
-  - Pre-configure: hostname, SSH enabled, WiFi credentials, locale
-  - Ref: Hardware Guide §3
-- [ ] **Initial system setup**
-  ```bash
-  sudo apt update && sudo apt upgrade -y
-  sudo apt install -y python3 python3-pip python3-venv git cups cups-client cups-bsd
-  ```
-- [ ] **Install CUPS and configure printer**
-  ```bash
-  sudo usermod -a -G lpadmin pi
-  sudo cupsctl --remote-admin
-  # Connect printer via USB
-  # Browse to http://localhost:631 → Add Printer → Select driver
-  ```
-  - Install Brother drivers (download from Brother website or use built-in)
-  - Print test page: `lp -d Brother_HL-L2350DW /usr/share/cups/data/testprint.pdf`
-  - Ref: Hardware Guide §4
-- [ ] **Test all CUPS print options**
-  - B&W: `-o ColorModel=Gray`
-  - Duplex: `-o sides=two-sided-long-edge`
-  - 2-up: `-o number-up=2`
-  - 4-up: `-o number-up=4`
-  - Page range: `-o page-ranges=1-5`
-  - Paper size: `-o media=A4`
-  - Multiple copies: `-n 3`
-  - Ref: Hardware Guide §4
-- [ ] **Virtual Printer setup** (for development without hardware)
-  - CUPS PDF virtual printer: prints to PDF file instead of paper
-  - `sudo apt install cups-pdf`
-  - Output goes to `~/PDF/`
-  - This lets all team members test without the physical printer
-  - Ref: PRD K-06
-
-### Week 3–4: Kiosk Agent
-
-- [ ] **Kiosk Agent daemon** — `kiosk/agent.py`
-  - Python script that runs as a systemd service
-  - Main loop:
-    1. Poll backend every 5 seconds: `GET /api/kiosk/next-job?kiosk_id=KIOSK-01`
-    2. If job found → download PDF: `GET /api/kiosk/jobs/{id}/download`
-    3. Send to printer via CUPS: `lp -d <printer> -o <options> <file>`
-    4. Monitor print progress (CUPS job status)
-    5. Report result: `POST /api/kiosk/jobs/{id}/status` (printed/failed)
-  - Ref: PRD K-01 to K-05
-- [ ] **CUPS integration module** — `kiosk/cups_handler.py`
-  - Map PrintStation options to CUPS command-line flags
-  - Submit print job via `subprocess.run(["lp", ...])` or `pycups` library
-  - Monitor CUPS job queue: `lpstat -W completed`
-  - Detect errors: paper jam, out of toner, printer offline
-  - Ref: Hardware Guide §4
-- [ ] **PDF download and caching**
-  - Download PDF to local temp directory before printing
-  - Verify file integrity (file size, valid PDF)
-  - Clean up temp files after successful print
-  - Ref: PRD K-03
-- [ ] **Status reporting** — `kiosk/reporter.py`
-  - Report to backend: print success, failure (with error message), pages printed
-  - Heartbeat: `POST /api/kiosk/heartbeat` every 30 seconds
-  - Report: kiosk_id, status (online/printing/error), timestamp
-  - Ref: PRD K-05, Architecture 3.6
-
-### Week 5–6: Touchscreen UI & Integration
-
-- [ ] **Touchscreen Kiosk UI** (HTML/JS in Chromium kiosk mode)
-  - **Code Entry Screen** (default screen)
-    - Large numeric/alpha keypad
-    - 6-digit input field with big characters
-    - "Submit" button
-    - PrintStation branding/logo
-  - **Job Details Screen** (after valid code)
-    - Show: filename, page count, print options, status
-    - "Print" button (big, green)
-    - "Cancel" button
-  - **Printing Progress Screen**
-    - Progress bar (page X of Y)
-    - Animated printing indicator
-    - "Please wait..."
-  - **Done Screen**
-    - "✅ Done! Collect your pages"
-    - Auto-return to Code Entry after 15 seconds
-  - **Error Screen**
-    - "❌ Print failed. Please contact support."
-    - Error details
-    - "Try Again" button
-  - Ref: PRD K-01
-- [ ] **Chromium kiosk mode setup**
-  ```bash
-  # /home/pi/.config/autostart/kiosk.desktop
-  [Desktop Entry]
-  Type=Application
-  Name=PrintStation Kiosk
-  Exec=chromium-browser --kiosk --noerrdialogs --disable-translate --no-first-run http://localhost:5000
-  ```
-  - Disable right-click, address bar, developer tools
-  - Auto-start on boot
-  - Ref: Hardware Guide §3
-- [ ] **Auto-start systemd service** for the Kiosk Agent
-  ```bash
-  # /etc/systemd/system/printstation-kiosk.service
-  [Unit]
-  Description=PrintStation Kiosk Agent
-  After=network.target cups.service
-  
-  [Service]
-  Type=simple
-  User=pi
-  WorkingDirectory=/home/pi/printstation/kiosk
-  ExecStart=/home/pi/printstation/kiosk/venv/bin/python agent.py
-  Restart=always
-  RestartSec=5
-  
-  [Install]
-  WantedBy=multi-user.target
-  ```
-  - Ref: Hardware Guide §3
-- [ ] **Network resilience**
-  - Retry failed API calls with exponential backoff
-  - Local job cache (if PDF downloaded but can't report status → retry later)
-  - Handle WiFi disconnections gracefully
-- [ ] **Physical kiosk setup** at university
-  - Place printer + RPi + touchscreen on desk
-  - Print QR code sign: "Upload from your phone, print here!"
-  - Power strip underneath desk
-  - Cable management
-  - Ref: Hardware Guide §1
-- [ ] **End-to-end test**: Code entry on touchscreen → print on real printer
+### 🧪 The Proof Test (Acceptance Criteria)
+> Open the touchscreen UI, punch in a 6-digit pickup code generated by Member 1/2, and hit "Print":
+> 1. The agent claims the job (other kiosks cannot print it).
+> 2. The printer (or CUPS Virtual PDF Printer) immediately begins printing with correct duplex (double-sided) and copy options.
+> 3. The backend database status transitions to `printed`.
+> 4. The local downloaded PDF is cleanly deleted from the kiosk's temp folder.
 
 ---
 
-## Phase 2 — After 50+ Users
+## ⚡ 3-Day Sprint Plan
 
-- [ ] **QR code scanning at kiosk** (PRD P2-07)
-  - Raspberry Pi camera module
-  - Read QR code containing pickup code
-  - Alternative to manual code entry
-- [ ] **Paper & toner level monitoring** (PRD P3-03)
-  - Read CUPS printer attributes for toner level
-  - Paper level: manual tracking or sensor
-  - Report levels to backend in heartbeat
-- [ ] **WebSocket connection** (replace HTTP polling)
-  - Real-time job push from backend → kiosk
-  - Lower latency, less server load
+### Day 1: Kiosk Daemon & CUPS Printing Handler
+- [ ] Review `kiosk/agent.py`, `kiosk/cups_handler.py`, and `kiosk/config.py`.
+- [ ] Implement `cups_handler.py`:
+  - Translate print options (color mode, duplex, copies, page range) into CUPS command arguments (`-o ColorModel=...`, `-o sides=two-sided-long-edge`, `-n <copies>`).
+  - Execute printing via `subprocess.run(["lp", ...])`.
+  - Add automatic dev fallback: log simulation output when `lp` is not installed on the developer's laptop.
+- [ ] Implement `kiosk/agent.py`:
+  - `lookup_code(code)` → `GET /api/kiosk/jobs/lookup`
+  - `claim_job(job_id)` → `POST /api/kiosk/jobs/{id}/claim`
+  - `download_job_file(job_id)` → `GET /api/kiosk/jobs/{id}/download`
+  - `report_status(job_id, status)` → `POST /api/kiosk/jobs/{id}/status`
+  - `send_heartbeat()` → `POST /api/kiosk/heartbeat`
+  - Post-print file cleanup to prevent student documents from lingering on the kiosk disk.
 
----
+### Day 2: Touchscreen UI & Keypad Polish
+- [ ] Test `kiosk/ui/index.html`:
+  - Big high-contrast numeric keypad (keys 0–9, Clear, Backspace).
+  - 6-digit code entry display.
+  - Job verification preview: filename, page count, price, print button.
+  - Printing status spinner / progress animation.
+  - Auto-return to standby code screen after 15 seconds of inactivity.
+- [ ] Connect the UI directly to the local agent or backend API.
 
-## Phase 3 — Scaling
-
-- [ ] **Metal enclosure specifications** (Hardware Guide §7)
-  - Work with fabrication shop (Cairo: عابدين / باب اللوق)
-  - Ventilation for printer heat
-  - Keyed lock for maintenance
-  - A4 output slot
-  - Wall-mounted or floor-bolted
-  - Estimated cost: 5,000–10,000 EGP
-- [ ] **UPS integration** (600VA for graceful shutdown)
-  - Detect power loss → safe shutdown script
-  - Ref: Hardware Guide §7
-- [ ] **4G USB dongle** as backup network
-  - Failover if university WiFi goes down
-  - Ref: Hardware Guide §5
-- [ ] **Secure boot + auto-update mechanism**
-  - Remote software updates via git pull or package manager
-  - Coordinate with Member 6
-  - Ref: Architecture §7
-- [ ] **Multi-kiosk support**
-  - Each RPi has unique kiosk_id
-  - Register with backend on first boot
-  - Config file for kiosk-specific settings
+### Day 3: Hardware Integration & Deployment
+- [ ] Set up CUPS on the Raspberry Pi (or Linux dev environment):
+  - Install CUPS: `sudo apt install cups cups-client`
+  - Configure printer driver or set up `cups-pdf` virtual printer for testing without ink/paper.
+- [ ] Set up systemd auto-start service (`printstation-kiosk.service`) so the agent boots automatically on power-on.
+- [ ] Set up Chromium kiosk auto-start (`chromium-browser --kiosk http://localhost:8000/kiosk`).
+- [ ] Execute **The Proof Test** with Member 2's backend.
 
 ---
 
-## Key Files You Own
+## 📁 Files You Own
 
 | File | Purpose |
 |---|---|
-| `kiosk/agent.py` | Main kiosk daemon (poll, download, print, report) — NEW |
-| `kiosk/cups_handler.py` | CUPS printing interface — NEW |
-| `kiosk/reporter.py` | Status reporting to backend — NEW |
-| `kiosk/ui/` | Touchscreen HTML/JS/CSS — NEW |
-| `kiosk/config.py` | Kiosk configuration (backend URL, kiosk_id, printer name) — NEW |
-| `backend/services/printer_hal.py` | Printer hardware abstraction (existing) |
-| `frontend/src/components/KioskScreen.jsx` | Kiosk UI (existing, may refactor to standalone) |
+| `kiosk/agent.py` | Main polling, download, and status reporting daemon |
+| `kiosk/cups_handler.py` | CUPS printer command builder and execution wrapper |
+| `kiosk/config.py` | Kiosk ID, secret, and backend URL configuration |
+| `kiosk/ui/index.html` | Touchscreen Chromium kiosk UI |
 
 ---
 
-## You Depend On
+## 🔌 Interfaces & Contracts You Depend On
 
-| Who | What You Need From Them |
-|---|---|
-| **Member 2** (Backend) | Kiosk API endpoints (polling, download, status update) |
-| **Member 4** (AI) | AI-generated PDFs must be valid, printable PDFs |
-| **Member 6** (DevOps) | Backend URL for kiosk config, remote access setup |
-
-## Others Depend On You
-
-| Who | What They Need From You |
-|---|---|
-| **Member 2** (Backend) | Confirmation that kiosk API contract works in practice |
-| **Member 6** (QA) | Working end-to-end print flow for system testing |
+- **Backend Kiosk API**: `GET /api/kiosk/jobs/lookup`, `POST /claim`, `GET /download`, `POST /status`, `POST /heartbeat`.
+- **Headers**: Must send `X-Kiosk-ID` and `X-Kiosk-Secret` for authentication.
 
 ---
 
-## Maintenance Responsibilities (Ongoing)
-
-| Task | Frequency |
-|---|---|
-| Check paper level | Daily |
-| Refill paper | Every 2–3 days |
-| Replace toner | Every 2–3 weeks |
-| Clean paper path | Monthly |
-| Check Pi health (SSH) | Weekly |
-| Full system check | Monthly |
-| Update kiosk software | As needed (remote) |
-
-Ref: Hardware Guide §8
+## 🔮 Future Enhancements (Phase 2)
+- USB QR code scanner support (student scans phone screen instead of typing 6 digits).
+- Hardware sensor hooks (paper jam detector, physical door open sensor).
+- Secondary thermal printer for printing paper payment receipts.

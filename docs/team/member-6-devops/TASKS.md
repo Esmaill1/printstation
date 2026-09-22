@@ -1,261 +1,87 @@
-# Member 6 — DevOps, Admin Dashboard & QA
+# Member 6 — DevOps, Infrastructure & QA Lead
 
-> **Role**: Everything that keeps the system running — deployment, monitoring, testing, admin view, and documentation.  
-> **Tech Stack**: Nginx, Let's Encrypt, GitHub Actions, Docker, Grafana, Prometheus, React (Admin)  
-> **Academic Coverage**: Entrepreneurship + Systems — deployment, monitoring, business metrics
-
----
-
-## Phase 1 — Prototype (Weeks 1–6)
-
-### Week 1–2: Infrastructure Setup
-
-- [ ] **VPS provisioning**
-  - Provider: DigitalOcean or Hetzner (cheapest with good performance)
-  - Specs: 2 vCPU, 4GB RAM, 80GB SSD (sufficient for prototype)
-  - OS: Ubuntu 22.04/24.04 LTS
-  - Region: Frankfurt or Amsterdam (closest to Egypt with good latency)
-  - Estimated cost: 500–1,000 EGP/month
-  - Ref: Architecture §7
-- [ ] **Domain + DNS setup**
-  - Register domain (e.g., printstation.app or printstation.eg)
-  - Cloudflare DNS (free tier)
-  - Point domain to VPS IP
-  - Ref: Architecture §Infrastructure
-- [ ] **SSL certificate**
-  - Let's Encrypt via Certbot
-  - Auto-renewal cron job
-  - Ref: Architecture §6
-- [ ] **Nginx configuration**
-  - Reverse proxy: port 80/443 → FastAPI on port 8000
-  - Serve frontend static files from `/var/www/printstation/`
-  - HTTPS redirect (HTTP → HTTPS)
-  - Gzip compression
-  - Security headers (HSTS, CSP, X-Frame-Options)
-  - Coordinate with Member 3 for security headers
-  ```nginx
-  server {
-      listen 443 ssl;
-      server_name printstation.app;
-      
-      # Frontend static files
-      location / {
-          root /var/www/printstation/frontend;
-          try_files $uri $uri/ /index.html;
-      }
-      
-      # Backend API
-      location /api/ {
-          proxy_pass http://127.0.0.1:8000;
-          proxy_set_header Host $host;
-          proxy_set_header X-Real-IP $remote_addr;
-      }
-      
-      # Uploaded files (if served by nginx)
-      location /uploads/ {
-          internal;  # Only accessible via X-Accel-Redirect
-      }
-  }
-  ```
-  - Ref: Architecture §7
-- [ ] **Backend deployment**
-  - Clone repo to VPS
-  - Create Python virtual environment
-  - Install requirements: `pip install -r requirements.txt`
-  - Create systemd service for uvicorn
-  - Configure `.env` file (API keys, DB path, etc.)
-  - Verify: `curl https://printstation.app/api/stats` returns JSON
-- [ ] **Frontend deployment**
-  - Build: `cd frontend && npm install && npm run build`
-  - Copy `dist/` to `/var/www/printstation/frontend/`
-  - Verify: `https://printstation.app` loads the web app
-- [ ] **Git repository setup**
-  - Branch strategy: `main` (production), `develop` (integration), `feature/*` (per-task)
-  - Protected `main` branch (require PR + 1 review)
-  - `.gitignore` for: `node_modules/`, `__pycache__/`, `.env`, `uploads/`, `*.db`
-
-### Week 3–4: CI/CD & Testing
-
-- [ ] **CI/CD pipeline** (GitHub Actions)
-  ```yaml
-  # .github/workflows/ci.yml
-  name: CI
-  on: [push, pull_request]
-  jobs:
-    backend-test:
-      runs-on: ubuntu-latest
-      steps:
-        - uses: actions/checkout@v4
-        - uses: actions/setup-python@v5
-          with: { python-version: '3.11' }
-        - run: pip install -r backend/requirements.txt
-        - run: cd backend && python -m pytest
-    
-    frontend-build:
-      runs-on: ubuntu-latest
-      steps:
-        - uses: actions/checkout@v4
-        - uses: actions/setup-node@v4
-          with: { node-version: '20' }
-        - run: cd frontend && npm install && npm run build
-  ```
-- [ ] **Deployment pipeline** (GitHub Actions → VPS)
-  - On merge to `main`:
-    - SSH to VPS
-    - `git pull`
-    - Rebuild frontend
-    - Restart backend service
-    - Health check
-- [ ] **End-to-end test pipeline** — `test_pipeline.py`
-  - Upload PDF → verify job created
-  - Set options → verify price calculated
-  - Trigger AI → verify summary generated
-  - Simulate payment → verify pickup code issued
-  - Lookup by code → verify job found
-  - Claim job → verify status changes
-  - Mark printed → verify completed
-  - Run this automatically in CI
-  - Ref: Existing `test_pipeline.py`
-- [ ] **Monitoring setup**
-  - UptimeRobot (free): monitor `https://printstation.app/api/stats`
-  - Alert via email/Telegram if down
-  - Ref: Architecture §Infrastructure
-- [ ] **Logging setup**
-  - Backend logging to file (`/var/log/printstation/api.log`)
-  - Log rotation with `logrotate`
-  - Structured JSON logs (for later parsing)
-
-### Week 5–6: Stats & Integration Testing
-
-- [ ] **Stats endpoint** — `GET /api/stats` (coordinate with Member 2)
-  - total_jobs, jobs_today, total_pages_printed, total_revenue, active_kiosks, pending_jobs
-  - Query database for aggregates
-  - Ref: API Reference
-- [ ] **Full system integration test**
-  - Deploy everything to VPS
-  - Test from phone: upload → options → pay → get code
-  - Test on kiosk: enter code → print
-  - Document all bugs found
-- [ ] **Performance baseline**
-  - Measure: upload time (50MB), page count extraction, API response times
-  - Compare against targets in PRD §8
-  - Ref: PRD §8 (Performance)
-- [ ] **Backup strategy**
-  - Daily SQLite database backup (cron → copy to safe location)
-  - Uploaded files backup (less critical — expire after 24h)
-- [ ] **Documentation**
-  - Deployment guide (how to set up from scratch)
-  - Environment variables reference
-  - Troubleshooting guide
+> **Role**: Everything that runs the system — Dockerization, VPS deployment, automated CI testing, and production reliability.  
+> **Tech Stack**: Docker, Docker Compose, Nginx, GitHub Actions, Linux (Ubuntu), PostgreSQL  
+> **Sprint Timeline**: 3 Days (AI-Accelerated)
 
 ---
 
-## Phase 2 — After 50+ Users
+## 🎯 FINAL RESULT DELIVERABLE
 
-- [ ] **Database backup automation**
-  - Automated daily backups to cloud storage
-  - Backup verification (restore test monthly)
-- [ ] **Log aggregation**
-  - Centralized logging (Loki or ELK stack)
-  - Error tracking (Sentry — free tier)
-  - Alert on error spike
-- [ ] **Load testing**
-  - Simulate 50 concurrent uploads
-  - Identify bottlenecks
-  - Tools: `locust` or `k6`
+A **one-command deployment** system and automated CI pipeline:
+1. Production-ready `Dockerfile` for `backend` and `Dockerfile` for `frontend`.
+2. A root `docker-compose.yml` orchestrating:
+   - PostgreSQL database with persistent volume.
+   - FastAPI Backend service.
+   - Frontend static bundle served via Nginx.
+   - Nginx reverse proxy routing traffic (`/api/` → backend, `/` → frontend).
+3. GitHub Actions CI pipeline running automated linting, Python compilation, and frontend build tests on every commit/PR.
+4. Copy-paste VPS deployment script based on `docs/deployment-guide.md`.
 
----
-
-## Phase 3 — Scaling
-
-- [ ] **Admin Dashboard UI** (React web app) (PRD P3-01)
-  - **Dashboard page**: real-time stats (jobs today, revenue, active kiosks)
-  - **Jobs list**: table with filters (status, date, kiosk), search
-  - **Kiosk management**: list kiosks, status, paper/toner levels
-  - **Revenue charts**: daily/weekly/monthly revenue graphs
-  - Protected by admin login
-- [ ] **Remote kiosk management** (PRD P3-02)
-  - Restart kiosk agent remotely: `POST /api/admin/kiosks/{id}/restart`
-  - View kiosk logs remotely
-  - Push software updates
-  - Coordinate with Member 5
-- [ ] **Analytics & revenue dashboards** (PRD P3-06)
-  - Daily revenue chart
-  - Popular print times (heatmap)
-  - AI feature adoption rate
-  - User retention metrics
-- [ ] **Multi-kiosk management** (PRD P3-05)
-  - Dashboard shows all kiosks on a map
-  - Per-kiosk stats
-  - Load balancing (assign jobs to least-busy kiosk)
-- [ ] **Docker Compose setup** (Architecture §7)
-  ```yaml
-  services:
-    nginx:
-      image: nginx:alpine
-      ports: ["80:80", "443:443"]
-    api:
-      build: ./backend
-      environment:
-        - DATABASE_URL=postgresql://...
-    db:
-      image: postgres:16
-    redis:
-      image: redis:7
-    monitoring:
-      image: grafana/grafana
-  ```
-- [ ] **Grafana + Prometheus** monitoring stack
-  - API response time metrics
-  - Error rate dashboards
-  - Kiosk uptime tracking
-  - Alert rules (response time > 5s, error rate > 5%)
-  - Ref: Architecture §Infrastructure
+### 🧪 The Proof Test (Acceptance Criteria)
+> On a fresh machine (or a blank VPS with Docker installed), run:
+> ```bash
+> docker compose up -d --build
+> ```
+> Within 2 minutes, all containers are healthy, visiting `http://localhost` loads the student frontend, and visiting `http://localhost/api/docs` loads the Swagger API docs. Zero manual configuration required.
 
 ---
 
-## Key Files You Own
+## ⚡ 3-Day Sprint Plan
+
+### Day 1: Dockerize Backend & Frontend
+- [ ] Create `backend/Dockerfile`:
+  - Python 3.12/3.13 slim base image.
+  - Install dependencies from `requirements.txt`.
+  - Expose port 8000 and run Uvicorn.
+- [ ] Create `frontend/Dockerfile`:
+  - Multi-stage build: Node stage (`npm run build`) → Nginx alpine stage to serve static `/dist` directory.
+- [ ] Test individual container builds locally.
+
+### Day 2: Docker Compose & Nginx Reverse Proxy
+- [ ] Build root `docker-compose.yml`:
+  - `db`: PostgreSQL 16 image with healthcheck and persistent volume `pgdata`.
+  - `backend`: Depends on `db`, mounts `uploads/` and `ai_output/` volumes, loads environment variables.
+  - `frontend`: Exposes web interface on port 80/443.
+- [ ] Configure `nginx.conf` for reverse proxying:
+  - Route `/api/` to backend service.
+  - Route `/kiosk/` to kiosk UI.
+  - Route `/` to frontend SPA (with `try_files $uri $uri/ /index.html;`).
+  - Gzip compression and security headers.
+- [ ] Test `docker compose up` locally and verify communication between containers.
+
+### Day 3: GitHub Actions CI & Production Runbook
+- [ ] Create `.github/workflows/ci.yml`:
+  - Trigger on push and pull requests to `master`.
+  - Job 1: Backend compile check (`python -m compileall backend/`).
+  - Job 2: Frontend build check (`npm ci && npm run build`).
+  - Job 3: Docker compose build check.
+- [ ] Verify production deployment steps on a cloud VPS (Hetzner / DigitalOcean) using `docs/deployment-guide.md`.
+- [ ] Run **The Proof Test** and hand off deployment instructions to the team.
+
+---
+
+## 📁 Files You Own
 
 | File | Purpose |
 |---|---|
-| `.github/workflows/ci.yml` | CI pipeline — NEW |
-| `.github/workflows/deploy.yml` | CD pipeline — NEW |
-| `deploy/nginx.conf` | Nginx configuration — NEW |
-| `deploy/docker-compose.yml` | Docker setup (Phase 3) — NEW |
-| `deploy/setup.sh` | VPS setup script — NEW |
-| `test_pipeline.py` | E2E test script (existing) |
-| `docs/deployment-guide.md` | How to deploy — NEW |
-| `admin/` | Admin Dashboard app (Phase 3) — NEW |
+| `docker-compose.yml` | Full-stack orchestration (DB, Backend, Frontend, Nginx) |
+| `backend/Dockerfile` | Container specification for FastAPI server |
+| `frontend/Dockerfile` & `nginx.conf` | Multi-stage build and static asset web server |
+| `.github/workflows/ci.yml` | Automated pull request validation pipeline |
+| `docs/deployment-guide.md` | Single-source VPS deployment runbook |
 
 ---
 
-## You Depend On
+## 🔌 Interfaces & Contracts You Depend On
 
-| Who | What You Need From Them |
-|---|---|
-| **Member 2** (Backend) | Stats endpoint, environment variables list, deployment requirements |
-| **Member 1** (Frontend) | Build output (`npm run build` → `dist/`) |
-| **All** | Clean, tested code before merging to main |
-
-## Others Depend On You
-
-| Who | What They Need From You |
-|---|---|
-| **Everyone** | Working deployment (VPS accessible, HTTPS working) |
-| **Member 2** (Backend) | Server environment, database, .env file on VPS |
-| **Member 3** (Payment) | SSL certificate (required for Paymob webhooks) |
-| **Member 5** (Kiosk) | Backend URL for kiosk configuration |
+- **Backend (Member 2)**: Container must start with `uvicorn app.main:app`.
+- **Frontend (Member 1)**: Must build cleanly via `npm run build` into `dist/`.
+- **Database**: PostgreSQL connection string passed to backend via `DATABASE_URL`.
 
 ---
 
-## Coordination Responsibilities
-
-| Responsibility | Details |
-|---|---|
-| **Daily standups** | Facilitate 10-min sync — blockers, progress, help |
-| **Shared API collection** | Maintain Postman/Thunder collection for all endpoints |
-| **PR review process** | Ensure at least 1 review before merge to main |
-| **`.env.example` maintenance** | Keep in sync with all required variables |
-| **Release management** | Tag versions, write changelogs |
-| **User testing coordination** | Plan and schedule testing sessions with students |
-| **Feedback collection** | Google Form for student satisfaction survey |
+## 🔮 Future Enhancements (Phase 2)
+- Prometheus + Grafana dashboard for kiosk uptime, revenue, and print volume metrics.
+- Automated daily PostgreSQL backup to cloud storage (S3 / Backblaze).
+- Multi-host Kubernetes / Nomad cluster when expanding across multiple university campuses.

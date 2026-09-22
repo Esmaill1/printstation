@@ -90,13 +90,14 @@ printstation/
 - [Deployment Guide](docs/deployment-guide.md)
 - [Contributing](docs/CONTRIBUTING.md)
 
-## Team
+## Team & Deliverables (3-Day AI Sprint)
 
-| Member | Component | Key Files |
-|---|---|---|
-| 1 — Frontend | Web App UI | `frontend/src/` |
-| 2 — Backend | Core API | `backend/app/` |
-| 3 — Payment & Security | Paymob + Auth | `backend/app/services/payment_service.py` |
-| 4 — AI | Summarization + Processing | `backend/app/services/ai_service.py` |
-| 5 — Kiosk | RPi + Printer | `kiosk/` |
-| 6 — DevOps & QA | Deployment + Testing | CI/CD, nginx, tests |
+| Member | Component | Key Deliverable | Task Contract |
+|---|---|---|---|
+| **1 — Frontend** | Web App UI | Responsive bilingual UI (Upload → Options → Pay → Pickup Code) | [TASKS.md](docs/team/member-1-frontend/TASKS.md) |
+| **2 — Backend** | Core API & DB | Live REST API & DB models replacing all stubs + lifecycle test | [TASKS.md](docs/team/member-2-backend/TASKS.md) |
+| **3 — Payment** | Paymob & Security | Paymob/Wallet integration + HMAC webhook verification | [TASKS.md](docs/team/member-3-payment/TASKS.md) |
+| **4 — AI** | Document Processing | Gemini summarization to PDF + OpenCV phone photo cleaner | [TASKS.md](docs/team/member-4-ai/TASKS.md) |
+| **5 — Kiosk** | Kiosk Agent & HW | Touchscreen UI + CUPS daemon with claim & auto-print | [TASKS.md](docs/team/member-5-kiosk/TASKS.md) |
+| **6 — DevOps** | Docker & Cloud | One-command `docker compose up -d` + CI/CD pipeline | [docs/team/member-6-devops/TASKS.md](docs/team/member-6-devops/TASKS.md) |
+
