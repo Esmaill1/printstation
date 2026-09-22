@@ -104,13 +104,56 @@ backend/
 
 ---
 
+## 🧪 TDD — Write Tests First
+
+> **Mandatory.** Every endpoint and service must be built test-first: Red → Green → Refactor. Read the full TDD guide in [`docs/CONTRIBUTING.md`](file:///d:/Projects/printstation/docs/CONTRIBUTING.md).
+
+**Your test files** (create `backend/tests/` directory):
+
+| Test File | What to Test |
+|-----------|-------------|
+| `conftest.py` | Test DB (SQLite in-memory), FastAPI test client, mock fixtures |
+| `test_upload.py` | Upload accepts PDF/DOCX/images, rejects >50MB, rejects bad types |
+| `test_options.py` | Options endpoint updates job, pricing recalculates correctly |
+| `test_pricing.py` | All combos: color, duplex, N-up, page ranges, copies, AI fee, minimum |
+| `test_auth.py` | Valid Clerk JWT accepts, invalid rejects, guest fallback works |
+| `test_jobs.py` | Job status returns correct fields, 404 on missing job |
+| `test_kiosk.py` | Lookup by code, claim locks job, double-claim fails, status updates |
+| `test_receipt.py` | Receipt generates valid PDF, streams with correct headers |
+| `test_wallet.py` | Balance returns correct amount, topup initiates payment |
+| `test_admin.py` | Admin endpoints require admin role, return correct data |
+
+**Example TDD flow (pricing):**
+```python
+# Step 1: 🔴 Write the failing test FIRST
+def test_bw_duplex_10_pages_costs_6_25():
+    result = calculate_price(page_count=10, color_mode="bw", duplex="duplex")
+    # 10 pages duplex = 5 sheets × 1.25 = 6.25
+    assert result["total_price"] == 6.25
+    assert result["physical_sheets"] == 5
+
+# Step 2: 🟢 Write minimum code to pass
+# Step 3: 🔵 Refactor, keep tests green
+```
+
+**Run tests:**
+```bash
+cd backend
+pip install pytest httpx     # httpx for FastAPI async test client
+pytest -v                     # Run all with verbose output
+pytest tests/test_pricing.py  # Run specific module
+```
+
+---
+
 ## ✅ Definition of Done
 
+- [ ] **Tests written FIRST** for every endpoint and service (Red → Green → Refactor)
+- [ ] All tests pass (`pytest -v`)
 - [ ] All endpoints from `api-reference.md` are implemented and return correct responses
 - [ ] Database migrations run cleanly on a fresh PostgreSQL instance
 - [ ] Clerk JWT auth works end-to-end with real tokens
 - [ ] Pricing engine correctly handles all edge cases (page ranges, duplex, N-up, copies)
-- [ ] `pytest` suite passes with 100% route coverage
 - [ ] All 5 acceptance tests in `TASKS.md` pass
 - [ ] Code follows project standards (black, ruff, type hints, docstrings)
 

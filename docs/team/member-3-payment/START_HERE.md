@@ -101,8 +101,54 @@ backend/
 
 ---
 
+## 🧪 TDD — Write Tests First
+
+> **Mandatory.** Every payment flow and security feature must be built test-first. Read the full TDD guide in [`docs/CONTRIBUTING.md`](file:///d:/Projects/printstation/docs/CONTRIBUTING.md).
+
+**Your test files** (in `backend/tests/`):
+
+| Test File | What to Test |
+|-----------|-------------|
+| `test_payment.py` | Card/wallet/fawry payment initiation, correct redirect_url, wallet balance deduction |
+| `test_webhook.py` | Valid HMAC accepts, invalid HMAC rejects (401), job status transitions to `paid` |
+| `test_refund.py` | Wallet refund re-credits balance, Paymob refund calls API, refund records saved |
+| `test_security.py` | Rate limiter returns 429 on excessive requests, CORS rejects unknown origins |
+| `test_wallet.py` | Balance check, topup flow, insufficient balance rejects payment |
+
+**Example TDD flow (HMAC webhook):**
+```python
+import hmac, hashlib
+
+# Step 1: 🔴 Write the failing test FIRST
+def test_webhook_rejects_invalid_hmac(client):
+    response = client.post("/api/payments/webhook", json={"data": "fake"}, 
+                          headers={"X-Paymob-Signature": "invalid"})
+    assert response.status_code == 401
+
+def test_webhook_accepts_valid_hmac_and_marks_job_paid(client, paid_job):
+    payload = build_paymob_payload(paid_job.id)
+    signature = hmac.new(SECRET, payload_string, hashlib.sha512).hexdigest()
+    response = client.post("/api/payments/webhook", json=payload,
+                          headers={"X-Paymob-Signature": signature})
+    assert response.status_code == 200
+    assert db.get(paid_job.id).status == "paid"
+
+# Step 2: 🟢 Write minimum code to pass
+# Step 3: 🔵 Refactor, keep tests green
+```
+
+**Run tests:**
+```bash
+cd backend
+pytest tests/test_payment.py tests/test_webhook.py tests/test_refund.py -v
+```
+
+---
+
 ## ✅ Definition of Done
 
+- [ ] **Tests written FIRST** for every payment flow and security feature (Red → Green → Refactor)
+- [ ] All tests pass (`pytest -v`)
 - [ ] Card, wallet, and Fawry payment methods all work end-to-end
 - [ ] HMAC webhook correctly rejects invalid signatures and accepts valid ones
 - [ ] Student wallet balance deducts correctly in a database transaction

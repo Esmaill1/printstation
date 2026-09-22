@@ -143,8 +143,53 @@ lp -d HP_LaserJet -n 2 -o ColorModel=Gray -o sides=two-sided-long-edge -o number
 
 ---
 
+## 🧪 TDD — Write Tests First
+
+> **Mandatory.** Every kiosk module must be built test-first. Read the full TDD guide in [`docs/CONTRIBUTING.md`](file:///d:/Projects/printstation/docs/CONTRIBUTING.md).
+
+**Your test files** (create `kiosk/tests/` directory):
+
+| Test File | What to Test |
+|-----------|-------------|
+| `conftest.py` | Mock HTTP responses from backend, mock CUPS system |
+| `test_cups_handler.py` | Every print option → correct `lp` command string (color, duplex, N-up, copies, range) |
+| `test_agent.py` | Agent state machine: idle → lookup → claim → print → report status |
+| `test_qr.py` | QR token validation (valid `ps_qr_*` format accepts, random strings reject) |
+| `test_heartbeat.py` | Heartbeat sends correct JSON payload, retries on network failure |
+
+**Example TDD flow (CUPS handler):**
+```python
+# Step 1: 🔴 Write the failing test FIRST
+def test_duplex_portrait_produces_correct_lp_flag():
+    cmd = build_cups_command("file.pdf", duplex="duplex", orientation="portrait")
+    assert "-o sides=two-sided-long-edge" in cmd
+
+def test_nup_4_produces_correct_flag():
+    cmd = build_cups_command("file.pdf", pages_per_sheet=4)
+    assert "-o number-up=4" in cmd
+
+def test_simulation_mode_logs_instead_of_printing():
+    result = print_document("file.pdf", simulate=True)
+    assert result["status"] == "printed"
+    assert result["simulated"] is True
+
+# Step 2: 🟢 Write minimum code to pass
+# Step 3: 🔵 Refactor, keep tests green
+```
+
+**Run tests:**
+```bash
+cd kiosk
+pip install pytest
+pytest -v
+```
+
+---
+
 ## ✅ Definition of Done
 
+- [ ] **Tests written FIRST** for every module (Red → Green → Refactor)
+- [ ] All tests pass (`pytest -v`)
 - [ ] Touchscreen UI is usable with finger taps on a 7" or 10" display
 - [ ] 6-digit keypad entry retrieves and displays job details
 - [ ] QR scanner recognizes PrintStation QR codes from a phone screen

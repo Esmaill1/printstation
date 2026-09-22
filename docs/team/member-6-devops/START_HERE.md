@@ -175,8 +175,56 @@ volumes:
 
 ---
 
+## 🧪 TDD — Write Tests First
+
+> **Mandatory.** Infrastructure and admin dashboard must be built test-first. Read the full TDD guide in [`docs/CONTRIBUTING.md`](file:///d:/Projects/printstation/docs/CONTRIBUTING.md).
+
+**Your test files:**
+
+| Test File | What to Test |
+|-----------|-------------|
+| `tests/test_docker.sh` | `docker compose up` exits 0, all containers healthy within 90s |
+| `tests/test_nginx.sh` | `/` returns 200, `/api/health` proxies to backend, `/admin` serves dashboard |
+| `tests/test_backup.sh` | `backup_db.sh` creates `.sql.gz` file, `restore_db.sh` restores it correctly |
+| `frontend/src/admin/*.test.jsx` | Admin dashboard components: fleet panel fetches kiosks, metrics chart renders |
+| `.github/workflows/ci-cd.yml` | Pipeline runs lint, test, build stages — verify each passes on a clean checkout |
+
+**Example TDD flow (admin dashboard):**
+```jsx
+// Step 1: 🔴 Write the failing test FIRST
+test('fleet panel shows kiosk statuses from API', async () => {
+  // Mock GET /api/admin/kiosks
+  server.use(rest.get('/api/admin/kiosks', (req, res, ctx) =>
+    res(ctx.json({ kiosks: [{ kiosk_id: 'K1', status: 'online' }] }))
+  ));
+  render(<FleetPanel />);
+  expect(await screen.findByText('online')).toBeInTheDocument();
+});
+
+// Step 2: 🟢 Write minimum code to pass
+// Step 3: 🔵 Refactor, keep tests green
+```
+
+**Infrastructure tests (shell):**
+```bash
+# Test Docker Compose boots cleanly
+docker compose up -d --build
+sleep 30
+docker compose ps --format json | jq -e '.[] | select(.State != "running")' && exit 1
+echo "✅ All containers healthy"
+
+# Test Nginx routing
+curl -sf http://localhost/ > /dev/null && echo "✅ Frontend OK"
+curl -sf http://localhost/api/health > /dev/null && echo "✅ Backend proxy OK"
+```
+
+---
+
 ## ✅ Definition of Done
 
+- [ ] **Tests written FIRST** for admin dashboard and infrastructure scripts (Red → Green → Refactor)
+- [ ] All admin dashboard tests pass (`npx vitest`)
+- [ ] All infrastructure smoke tests pass
 - [ ] `docker compose up -d --build` boots all services within 90 seconds with zero crashes
 - [ ] Nginx routes correctly: `/` → frontend, `/admin/` → admin, `/api/` → backend
 - [ ] Admin dashboard shows live kiosk status, job queue, and revenue metrics

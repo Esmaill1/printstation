@@ -115,8 +115,51 @@ backend/
 
 ---
 
+## 🧪 TDD — Write Tests First
+
+> **Mandatory.** Every AI pipeline must be built test-first. Read the full TDD guide in [`docs/CONTRIBUTING.md`](file:///d:/Projects/printstation/docs/CONTRIBUTING.md).
+
+**Your test files** (in `backend/tests/`):
+
+| Test File | What to Test |
+|-----------|-------------|
+| `test_ai.py` | Summarization returns text for each mode, handles empty PDFs, respects custom prompts |
+| `test_cv.py` | OpenCV deskews angled images, binarization produces monochrome output |
+| `test_pdf_compiler.py` | ReportLab produces valid A4 PDF, page count is correct, Arabic text renders |
+| `test_ocr.py` | OCR extracts text from test images, organizes into structured markdown |
+| `test_flashcards.py` | Flashcard generator produces 2-column layout, correct Q&A pairs |
+
+**Example TDD flow (summarizer):**
+```python
+# Step 1: 🔴 Write the failing test FIRST
+def test_key_points_mode_returns_bullet_list():
+    text = "Photosynthesis is the process by which plants convert sunlight..."
+    result = summarize(text, mode="key_points")
+    assert "•" in result or "-" in result  # Must contain bullets
+    assert len(result) < len(text)          # Must be shorter
+
+def test_simulation_mode_returns_instant_result():
+    # When GEMINI_API_KEY is unset, should return mock summary
+    result = summarize("any text", mode="study_notes")
+    assert result is not None
+    assert len(result) > 0
+
+# Step 2: 🟢 Write minimum code to pass
+# Step 3: 🔵 Refactor, keep tests green
+```
+
+**Run tests:**
+```bash
+cd backend
+pytest tests/test_ai.py tests/test_cv.py tests/test_pdf_compiler.py -v
+```
+
+---
+
 ## ✅ Definition of Done
 
+- [ ] **Tests written FIRST** for every AI pipeline (Red → Green → Refactor)
+- [ ] All tests pass (`pytest -v`)
 - [ ] 4-mode summarizer produces accurate, well-formatted summaries from 30+ page PDFs
 - [ ] Arabic content is summarized correctly with proper RTL formatting
 - [ ] OpenCV pipeline turns poorly lit phone photos into crisp monochrome pages

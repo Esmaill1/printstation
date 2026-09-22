@@ -99,10 +99,57 @@ frontend/
 
 ---
 
+## 🧪 TDD — Write Tests First
+
+> **Mandatory.** Every component must be built test-first: Red → Green → Refactor. Read the full TDD guide in [`docs/CONTRIBUTING.md`](file:///d:/Projects/printstation/docs/CONTRIBUTING.md).
+
+**Setup Vitest:**
+```bash
+cd frontend
+npm install -D vitest @testing-library/react @testing-library/jest-dom jsdom
+```
+
+**Your test files** (co-located next to components):
+
+| Test File | What to Test |
+|-----------|-------------|
+| `FileUploader.test.jsx` | File selection triggers upload, rejects >50MB, shows progress |
+| `DocumentPreview.test.jsx` | PDF renders on canvas, page nav works, zoom updates |
+| `PrintOptions.test.jsx` | Changing options recalculates price, page range validates |
+| `PickupModal.test.jsx` | Displays 6-digit code, QR code renders, copy button works |
+| `PrintHistory.test.jsx` | Fetches jobs from API, shows statuses, receipt download triggers |
+| `api.test.js` | Clerk JWT injected in headers, error responses handled |
+
+**Example TDD flow:**
+```jsx
+// Step 1: 🔴 Write the failing test
+import { render, screen } from '@testing-library/react';
+import PrintOptions from './PrintOptions';
+
+test('selecting color mode updates price to 3.50 per page', () => {
+  render(<PrintOptions pageCount={10} />);
+  fireEvent.click(screen.getByText('Color'));
+  expect(screen.getByTestId('total-price')).toHaveTextContent('35.00');
+});
+
+// Step 2: 🟢 Write the minimum code to pass
+// Step 3: 🔵 Refactor, keep tests green
+```
+
+**Run tests:**
+```bash
+npx vitest          # Run once
+npx vitest --watch  # Watch mode (re-runs on save)
+```
+
+---
+
 ## ✅ Definition of Done
 
 Before you submit your PR, verify:
 
+- [ ] **Tests written FIRST** for every component (Red → Green → Refactor)
+- [ ] All tests pass (`npx vitest`)
 - [ ] All 8 features listed above are functional
 - [ ] Mobile-first responsive design (looks great on 375px width)
 - [ ] Arabic RTL mode works without CSS overflow or broken layouts

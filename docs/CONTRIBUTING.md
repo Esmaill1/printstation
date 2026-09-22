@@ -259,16 +259,161 @@ If you change an API endpoint (request body, response shape, status codes):
 | Shared API collection | Postman/Thunder Client — test any endpoint |
 | WhatsApp/Telegram group | Quick questions, urgent issues |
 
+## Test-Driven Development (TDD)
+
+> **Mandatory for all members.** Every feature must follow the Red → Green → Refactor cycle. No PR will be accepted without tests.
+
+### The TDD Workflow
+
+```
+1. 🔴 RED    — Write a failing test that describes what the feature should do
+2. 🟢 GREEN  — Write the minimum code to make the test pass
+3. 🔵 REFACTOR — Clean up the code while keeping all tests green
+4. Repeat for the next behavior
+```
+
+### Why TDD?
+
+- Tests become **living documentation** of how the system works
+- You catch bugs **before** they reach code review
+- Refactoring is safe — tests tell you immediately if you broke something
+- Integration between 6 members' code is verified automatically
+
+### Backend Testing (Python — pytest)
+
+```bash
+# Run all tests
+cd backend
+pytest
+
+# Run tests for a specific module
+pytest tests/test_pricing.py
+
+# Run with verbose output
+pytest -v
+
+# Run a single test
+pytest tests/test_pricing.py::test_duplex_halves_sheet_count
+```
+
+**Test file structure:**
+
+```
+backend/
+├── tests/
+│   ├── conftest.py              ← Shared fixtures (test DB, test client, mock data)
+│   ├── test_upload.py           ← POST /api/upload tests
+│   ├── test_options.py          ← POST /api/jobs/{id}/options tests
+│   ├── test_pricing.py          ← Pricing engine unit tests
+│   ├── test_auth.py             ← Clerk JWT verification tests
+│   ├── test_payment.py          ← Payment flow + webhook tests
+│   ├── test_ai.py               ← AI summarization + OCR tests
+│   ├── test_kiosk.py            ← Kiosk lookup, claim, status tests
+│   ├── test_admin.py            ← Admin dashboard API tests
+│   ├── test_receipt.py          ← Receipt generation tests
+│   └── test_wallet.py           ← Wallet balance + topup tests
+└── pytest.ini                   ← pytest configuration
+```
+
+**Test naming convention:**
+
+```python
+# ✅ Good — describes the behavior
+def test_duplex_halves_sheet_count():
+def test_upload_rejects_file_over_50mb():
+def test_hmac_webhook_rejects_invalid_signature():
+
+# ❌ Bad — describes the method
+def test_calculate_price():
+def test_upload():
+def test_webhook():
+```
+
+**Example TDD flow (pricing engine):**
+
+```python
+# Step 1: 🔴 Write the failing test FIRST
+def test_bw_simplex_10_pages_costs_12_50():
+    result = calculate_price(page_count=10, color_mode="bw", duplex="simplex")
+    assert result["total_price"] == 12.50
+
+# Step 2: 🟢 Write the minimum code to pass
+def calculate_price(page_count, color_mode, duplex):
+    rate = 1.25 if color_mode == "bw" else 3.50
+    return {"total_price": max(3.00, page_count * rate)}
+
+# Step 3: 🔵 Refactor if needed, run tests again
+```
+
+### Frontend Testing (JavaScript — Vitest)
+
+```bash
+# Install test dependencies
+cd frontend
+npm install -D vitest @testing-library/react @testing-library/jest-dom jsdom
+
+# Run all tests
+npx vitest
+
+# Run in watch mode (re-runs on file save)
+npx vitest --watch
+```
+
+**Test file structure:**
+
+```
+frontend/
+├── src/
+│   ├── components/
+│   │   ├── FileUploader.jsx
+│   │   ├── FileUploader.test.jsx      ← Co-located test file
+│   │   ├── PrintOptions.jsx
+│   │   ├── PrintOptions.test.jsx
+│   │   └── ...
+│   ├── api.js
+│   └── api.test.js
+└── vitest.config.js
+```
+
+### Kiosk Testing (Python — pytest)
+
+```
+kiosk/
+├── tests/
+│   ├── test_cups_handler.py     ← CUPS command builder tests
+│   ├── test_agent.py            ← Agent state machine tests
+│   └── conftest.py              ← Shared fixtures
+```
+
+### Test Coverage Rules
+
+| Area | Minimum | What to test |
+|------|---------|-------------|
+| Backend routes | Every endpoint | Happy path + error cases (400, 401, 404, 422) |
+| Pricing engine | 100% | All combinations: color, duplex, N-up, page ranges, copies, AI fee, minimum |
+| Payment HMAC | 100% | Valid signature accepts, invalid rejects, timing-safe comparison |
+| CUPS handler | Every option | Color, duplex, N-up, copies, page range → correct `lp` command |
+| Frontend components | Core interactions | Upload triggers API call, options update price, payment flow completes |
+
+### PR Requirements
+
+> **No PR will be merged without:**
+> 1. Tests written **before** the implementation (TDD)
+> 2. All tests passing (`pytest` / `vitest`)
+> 3. Tests cover both happy path AND error cases
+> 4. Test names describe the behavior, not the function name
+
 ---
 
 ## Definition of Done
 
 A task is "done" when:
 
+- [ ] **Tests written FIRST** (Red → Green → Refactor)
+- [ ] All tests pass (`pytest` for backend/kiosk, `vitest` for frontend)
 - [ ] Code is written and working
 - [ ] Code follows project standards (formatted, linted)
 - [ ] Edge cases are handled (errors, empty states, loading)
-- [ ] Tested manually (happy path + error path)
 - [ ] PR created, reviewed, and merged
 - [ ] Documentation updated (if applicable)
 - [ ] Works on mobile (if frontend)
