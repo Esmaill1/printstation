@@ -10,11 +10,14 @@
 
 A production-ready, high-throughput FastAPI backend server connected to PostgreSQL with zero mock stubs, featuring:
 
-1. **Document Ingestion & Conversion**:
-   - `POST /api/upload`: Handles multipart uploads (PDF, DOCX, PPTX).
-   - Auto-converts Office documents (DOCX/PPTX) to PDF.
-   - Enforces magic byte checks, virus/MIME validation, and max 50MB limits.
-   - Extracts page count and metadata via `pypdf`.
+1. **Universal File Ingestion & Auto-Conversion Engine**:
+   - `POST /api/upload`: Handles multipart uploads of **any file format**:
+     - PDF documents (`.pdf`)
+     - Smartphone Photos & Images (`.jpg, .jpeg, .png, .webp, .heic, .bmp, .tiff`) → automatically scaled, centered, and compiled to A4 PDF via Pillow.
+     - Microsoft Office Documents (`.docx, .doc, .pptx, .ppt`) → automatically converted to printable PDF.
+     - Plain and Rich Text (`.txt, .md, .rtf`) → automatically typeset into A4 PDF.
+   - Enforces max 50MB file limit and extracts page count via `pypdf`.
+
 
 2. **Clerk Authentication & User Association**:
    - Decodes and validates Clerk JWT Bearer tokens from incoming HTTP headers using Clerk's JWKS endpoint.

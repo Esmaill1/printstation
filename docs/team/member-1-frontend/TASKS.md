@@ -10,8 +10,8 @@
 
 A complete, production-grade mobile-first web application running on React 19 / Vite featuring:
 
-1. **Document Ingestion & Preview**:
-   - Drag-and-drop or camera file picker supporting PDF files up to 50MB.
+1. **Universal Document Ingestion & Preview**:
+   - Accepts **all file formats**: PDF, Microsoft Word (DOCX/DOC), PowerPoint Slides (PPTX/PPT), Plain/Markdown Text (TXT/MD), and Images (JPG, PNG, WEBP, HEIC camera photos).
    - In-browser interactive PDF preview using `pdf.js` (page navigation, zoom in/out, page thumbnails).
    - Real-time page count calculation and display.
 
@@ -23,10 +23,10 @@ A complete, production-grade mobile-first web application running on React 19 / 
    - Copies multiplier (1 to 20).
    - Orientation toggle (Portrait / Landscape).
 
-3. **AI Study Studio**:
-   - "AI Summarize & Print" toggle switch.
-   - Mode selector: Key Points, Study Notes, Exam Prep, or Custom Prompt.
-   - Real-time AI summary text preview before sending to print.
+3. **AI Study & Vision Studio**:
+   - **AI Summarize & Print**: Mode selector (Key Points, Study Notes, Exam Prep, Custom) with real-time text preview before print.
+   - **✨ Image OCR & Academic Organizer**: Action for camera photos of notes/whiteboards that runs Vision OCR and organizes raw handwriting into a structured, titled study guide.
+
 
 4. **Clerk Authentication & User Profile**:
    - Seamless student sign-in & sign-up via `@clerk/clerk-react` (Google & Email).

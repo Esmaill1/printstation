@@ -78,6 +78,17 @@ class AIResponse(BaseModel):
     status: str
 
 
+class OCROrganizeResponse(BaseModel):
+    """Returned after extracting text from image(s) and organizing into a study guide."""
+    job_id: int
+    filename: str
+    page_count: int
+    estimated_price: float
+    organized_preview: str
+    status: str
+
+
+
 # ──────────────────────────────────────
 # Payment
 # ──────────────────────────────────────

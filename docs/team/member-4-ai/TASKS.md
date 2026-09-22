@@ -25,21 +25,27 @@ A complete, production-grade document intelligence engine in `backend/app/servic
    - Clean academic formatting: document title, date, headings, bold callouts, page numbering footer (`Page X of Y`).
    - Dynamically calculates the new condensed page count (e.g. reducing a 40-page lecture slide deck to a 3-page summary) and updates the backend pricing engine so students save money.
 
-3. **Phone Photo → Clean Document Scanner (OpenCV)**:
-   - Takes raw smartphone photos of handwritten notebooks, lecture slides, or whiteboards.
-   - Executes image processing pipeline:
+3. **Image OCR → Organized Study Document (Vision OCR + LLM)**:
+   - Takes student smartphone photos of handwritten notebooks, whiteboard notes, or textbook pages.
+   - Executes multimodal Vision OCR (Gemini Vision + Tesseract) to accurately transcribe all handwritten text, mathematical formulas, and scientific diagrams.
+   - Cleans and organizes noisy OCR text into a structured, titled academic study guide with clear section headers, bulleted points, formatted equations, and a "Key Takeaways" summary.
+   - Automatically compiles the organized output into a professional, printable A4 PDF via ReportLab.
+
+4. **Phone Photo → Clean Document Scanner (OpenCV)**:
+   - Executes computer vision image processing pipeline:
      - Edge detection & contour extraction to find document boundary.
-     - 4-point perspective transform (deskewing).
+     - 4-point perspective transform (deskewing angled captures).
      - Illumination correction & shadow removal.
      - Adaptive thresholding (Otsu / Gaussian binarization) to convert noisy camera photos into crisp, high-contrast monochrome pages suitable for laser printing.
      - Compiles images into a single multi-page PDF.
 
-4. **Exam Flashcard & Quiz Generator**:
+5. **Exam Flashcard & Quiz Generator**:
    - Transforms lecture slides into printable **Study Flashcards** (2-column layout designed for double-sided printing: questions on front, answers on back).
    - Generates multiple-choice practice quizzes with an answer key appendix.
 
-5. **Arabic OCR for Scanned Handouts**:
+6. **Arabic OCR for Scanned Handouts**:
    - Integrates Gemini Vision / Tesseract OCR to extract text from scanned, image-only Arabic lecture PDFs before feeding into the summarizer.
+
 
 ---
 

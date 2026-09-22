@@ -21,7 +21,7 @@ from app.database import get_db, create_tables
 from app.schemas import (
     UploadResponse,
     PrintOptionsRequest, PrintOptionsResponse,
-    AIRequest, AIResponse,
+    AIRequest, AIResponse, OCROrganizeResponse,
     PaymentRequest, PaymentResponse,
     JobStatusResponse,
     KioskJobLookupResponse,
@@ -75,20 +75,33 @@ async def upload_file(
     db: Session = Depends(get_db),
 ):
     """
-    Upload a PDF file for printing.
-    Validates file type (PDF only), size (≤50MB), and extracts page count.
+    Universal File Ingestion:
+    Accepts PDF, Images (JPG, PNG, WEBP), Word (DOCX), Presentations (PPTX), or Text (TXT/MD).
+    Automatically converts non-PDF formats to standard printable A4 PDF, extracts page count,
+    and initializes the print job.
 
     Owner: Member 2 (Backend)
     Depends on: file_service.py
     """
-    # TODO: Replace with real implementation from file_service
-    # - Validate PDF (MIME + magic bytes)
-    # - Enforce max size
-    # - Generate UUID filename, store in upload_dir
-    # - Extract page count with pypdf
-    # - Calculate initial price via pricing service
-    # - Create PrintJob in database
     raise HTTPException(status_code=501, detail="Not implemented yet — replace this stub")
+
+
+@app.post("/api/jobs/ocr-organize", response_model=OCROrganizeResponse)
+async def ocr_and_organize_image_notes(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    """
+    Multimodal Image OCR & Academic Organizer:
+    Takes an image (photo of handwritten lecture notes, whiteboard, textbook page),
+    runs Vision OCR, organizes the raw text into structured study notes (headings, bullets, formulas),
+    compiles it into a clean printable PDF, and creates a print job.
+
+    Owner: Member 4 (AI) & Member 2 (Backend)
+    Depends on: ai_service.py
+    """
+    raise HTTPException(status_code=501, detail="Not implemented yet — replace this stub")
+
 
 
 @app.post("/api/jobs/{job_id}/options", response_model=PrintOptionsResponse)

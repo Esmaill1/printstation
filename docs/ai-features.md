@@ -154,6 +154,39 @@ def enhance_document_photo(image_path: str) -> str:
 
 ---
 
+## 3.1 Image OCR to Organized Study Document (نظم ورتب صور المذكرات)
+
+### Problem
+Students constantly take photos of messy handwritten notebooks, blackboards, or slides. Even if cleaned, raw notes are often disorganized, fragmented, or difficult to study from.
+
+### Solution
+Student uploads photo(s) of lecture notes or textbook pages → Multimodal Vision OCR (Gemini 2.0 Flash Vision / Tesseract) transcribes all handwritten and printed content → LLM analyzes and organizes the raw content into a structured, titled study guide with section headings, clean bullet points, preserved formulas, and key takeaways → ReportLab compiles it directly into a clean A4 PDF ready to print.
+
+### Processing Pipeline
+```
+Smartphone Photo (Handwritten notes / Whiteboard)
+                    │
+                    ▼
+       Multimodal Vision OCR (Gemini Vision)
+                    │
+                    ▼
+       Academic Structuring & Typos Correction (LLM)
+       - Document Title & Topic
+       - Formatted Section Headers (## and ###)
+       - Clean Bulleted Concepts & Bolded Terms
+       - Formatted Math Equations & Formulas
+       - Summary Box: "Key Exam Takeaways"
+                    │
+                    ▼
+       ReportLab A4 Document Compiler
+                    │
+                    ▼
+       Printable A4 PDF Output (Clean Typography, Margins, Headers)
+```
+
+**Tech stack**: Gemini 2.0 Flash (Multimodal Vision + Structuring), ReportLab, Pillow
+
+
 ## 4. Phase 2: Flashcard Generator (اعمل كروت مذاكرة)
 
 ### Problem
