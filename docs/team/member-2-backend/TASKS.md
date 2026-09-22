@@ -1,63 +1,104 @@
-# Member 2 — Backend Lead (Core API)
+# Member 2 — Backend Lead (Core API & Systems)
 
-> **Role**: The FastAPI engine — file ingestion, database models, job lifecycle, and all REST endpoints.  
-> **Tech Stack**: Python (FastAPI), SQLAlchemy, pypdf, Pydantic, PostgreSQL / SQLite  
-> **Sprint Timeline**: 3 Days (AI-Accelerated)
-
----
-
-## 🎯 FINAL RESULT DELIVERABLE
-
-A fully functional FastAPI backend server with database persistence where all API routes in `backend/app/main.py` are live (zero `501 Not Implemented` stubs remaining):
-1. Accepts PDF uploads, validates file type and size, extracts page count via `pypdf`, and saves file safely.
-2. Updates print options and recalculates dynamic pricing.
-3. Transitions job to `paid` and generates a secure, unique **6-digit alphanumeric pickup code**.
-4. Serves kiosk endpoints: code lookup, job claiming, PDF streaming for printing, and status reporting.
-
-### 🧪 The Proof Test (Acceptance Criteria)
-> Run a single automated verification script (or Postman collection) that executes the complete lifecycle:
-> 1. `POST /api/upload` with a 5-page PDF → returns `job_id` and `page_count=5`.
-> 2. `POST /api/jobs/{id}/options` with `duplex="long_edge"` → returns updated price.
-> 3. `POST /api/jobs/{id}/pay` → status becomes `paid` and returns `pickup_code`.
-> 4. `GET /api/kiosk/jobs/lookup?code=...` → returns the job details.
-> 5. `GET /api/kiosk/jobs/{id}/download` → streams back the exact identical PDF file.
+> **Role**: The central FastAPI engine — database models, Clerk authentication, file processing, dynamic pricing, user print history, receipt generation, and kiosk coordination.  
+> **Tech Stack**: Python 3.12+, FastAPI, SQLAlchemy, PostgreSQL, PyJWT, pypdf, ReportLab, Celery/BackgroundTasks  
+> **Target**: Full Final Production Product (All Features)
 
 ---
 
-## ⚡ 3-Day Sprint Plan
+## 🎯 FINAL RESULT DELIVERABLES
 
-### Day 1: Database Setup & File Upload Pipeline
-- [ ] Set up virtual environment and install requirements: `pip install -r backend/requirements.txt`.
-- [ ] Initialize database in `backend/app/database.py` and verify `models.py` tables (`print_jobs`, `kiosks`, `users`).
-- [ ] Implement `POST /api/upload`:
-  - Enforce PDF validation (magic bytes check `%PDF` + MIME type).
-  - Enforce max 50MB file limit.
-  - Generate UUID filename and store in `uploads/` directory.
-  - Extract actual page count using `pypdf.PdfReader`.
-  - Insert row in `print_jobs` table with status `uploaded`.
-- [ ] Implement `GET /api/jobs/{id}/preview`:
-  - Serve PDF with headers: `Content-Type: application/pdf`, `Accept-Ranges: bytes`.
+A production-ready, high-throughput FastAPI backend server connected to PostgreSQL with zero mock stubs, featuring:
 
-### Day 2: Options, Pricing Engine & Code Generation
-- [ ] Implement `POST /api/jobs/{id}/options`:
-  - Validate schema via `schemas.py` (`PrintJobOptionsUpdate`).
-  - Calculate price using `services/pricing.py` (B&W vs Color rates, duplex sheet reduction, AI fee, 3.00 EGP minimum).
-  - Update DB record and return full price breakdown.
-- [ ] Implement `POST /api/jobs/{id}/pay`:
-  - Generate collision-free 6-digit pickup code using Python `secrets.choice()` (excluding confusing characters like 0/O, 1/I).
-  - Update status to `paid` and set `paid_at` timestamp.
-  - Return `{ status: "paid", pickup_code: "..." }`.
-- [ ] Implement `GET /api/jobs/{id}` for frontend status polling.
+1. **Document Ingestion & Conversion**:
+   - `POST /api/upload`: Handles multipart uploads (PDF, DOCX, PPTX).
+   - Auto-converts Office documents (DOCX/PPTX) to PDF.
+   - Enforces magic byte checks, virus/MIME validation, and max 50MB limits.
+   - Extracts page count and metadata via `pypdf`.
 
-### Day 3: Kiosk Endpoints & Full Lifecycle Testing
-- [ ] Implement Kiosk routes:
-  - `GET /api/kiosk/jobs/lookup?code={code}`: Verify code exists, return job details.
-  - `POST /api/kiosk/jobs/{id}/claim`: Lock job to kiosk ID, transition status to `printing`.
-  - `GET /api/kiosk/jobs/{id}/download`: Stream stored PDF to kiosk agent.
-  - `POST /api/kiosk/jobs/{id}/status`: Transition status to `printed` or `failed`, log error if any.
-  - `POST /api/kiosk/heartbeat`: Update kiosk health in DB (`last_heartbeat`, paper/toner level).
-- [ ] Write a 20-line test script `test_e2e_api.py` executing **The Proof Test**.
-- [ ] Verify CORS headers allow frontend (`localhost:5173`) and kiosk requests.
+2. **Clerk Authentication & User Association**:
+   - Decodes and validates Clerk JWT Bearer tokens from incoming HTTP headers using Clerk's JWKS endpoint.
+   - Automatically syncs or registers the `User` record in PostgreSQL (`clerk_user_id`, `email`, `name`).
+   - Associates print jobs with the authenticated student (with guest fallback support).
+
+3. **Advanced Pricing Engine**:
+   - Supports B&W (1.25 EGP) and Color (3.50 EGP).
+   - Handles custom page ranges (e.g. `"1-5, 8, 12-20"` -> computes effective pages).
+   - Computes physical sheets based on N-up (1, 2, 4 pages per sheet) and Duplex mode (`ceil(sides / 2)`).
+   - Applies AI processing surcharge (+2.00 EGP) and enforces the minimum order fee (3.00 EGP).
+
+4. **Job Lifecycle, Code & QR Generator**:
+   - Generates collision-free 6-digit alphanumeric codes (excluding `0`, `O`, `1`, `I`).
+   - Generates signed QR verification tokens (`ps_qr_<job_id>_<signature>`).
+   - Manages state transitions: `uploaded` → `processing` → `ready_for_payment` → `paid` → `printing` → `printed` / `failed`.
+
+5. **Print History & PDF Receipt Generation**:
+   - `GET /api/user/jobs`: Returns paginated history of all past print jobs for the logged-in user.
+   - `GET /api/jobs/{id}/receipt`: Dynamically generates a professional PDF receipt/invoice with ReportLab (Order ID, Student name, Date, Breakdown, VAT/Tax compliance) and streams it for download.
+
+6. **Kiosk Fleet API**:
+   - `GET /api/kiosk/jobs/lookup`: Look up by 6-digit code OR scanned QR token.
+   - `POST /api/kiosk/jobs/{id}/claim`: Atomic lock preventing double-printing across multiple kiosks.
+   - `GET /api/kiosk/jobs/{id}/download`: Streams the printable PDF file.
+   - `POST /api/kiosk/jobs/{id}/status`: Logs completion or failure.
+   - `POST /api/kiosk/heartbeat`: Fleet monitoring (updates paper level, toner level, and timestamp).
+
+7. **Automatic Failure Refund & File Cleanup**:
+   - If a kiosk reports `status: "failed"`, automatically triggers refund event through `payment_service`.
+   - Background cleanup task that purges local PDF files 24 hours after completion.
+
+---
+
+## 🧪 Acceptance Criteria & Proof Tests
+
+- [ ] **Test 1 (Clerk Auth & Upload)**: Send `POST /api/upload` with an `Authorization: Bearer <clerk_token>` header. Verify the job is saved and linked to the authenticated user's ID in PostgreSQL.
+- [ ] **Test 2 (Pricing & Page Ranges)**: Send options with page range `"1-4, 7"` (5 pages), duplex enabled, color mode. Verify the calculated price matches: `ceil(5/2) = 3 sheets * 3.50 EGP = 10.50 EGP`.
+- [ ] **Test 3 (Kiosk Code & QR Claim)**:
+  - Mark job paid → verify code `654321` and QR token exist.
+  - Call `GET /api/kiosk/jobs/lookup?code=654321` → returns job specs.
+  - Call `POST /api/kiosk/jobs/{id}/claim` → status transitions to `printing`.
+- [ ] **Test 4 (Receipt Download)**: Call `GET /api/jobs/{id}/receipt` → returns a valid, beautifully formatted PDF invoice with company header and itemized costs.
+- [ ] **Test 5 (Automated Test Suite)**: Run `pytest` across all routes with 100% pass rate.
+
+---
+
+## ⚡ Step-by-Step Implementation Checklist
+
+### 1. Database & ORM Setup
+- [ ] Configure PostgreSQL in `backend/app/database.py`.
+- [ ] Define complete schema in `backend/app/models.py`:
+  - `users` (id, clerk_user_id, email, name, wallet_balance, created_at)
+  - `print_jobs` (all settings, pickup_code, qr_token, status, prices, kiosk_id, timestamps)
+  - `kiosks` (id, name, location, status, paper_level, toner_level, last_heartbeat)
+  - `payments` (id, job_id, amount, provider, reference, status, paid_at)
+- [ ] Set up Alembic migrations.
+
+### 2. Clerk Authentication Middleware
+- [ ] Build `app/auth.py`:
+  - Fetch Clerk JWKS public keys with caching.
+  - Verify and decode JWT tokens.
+  - Inject current `User` instance into FastAPI route dependencies (`Depends(get_current_user)`).
+
+### 3. File Processing & Pricing Engine
+- [ ] Implement `POST /api/upload` supporting PDF and DOCX conversion.
+- [ ] Implement `services/pricing.py`:
+  - Complex page range parser.
+  - Duplex, N-up, copies, and AI fee calculation.
+  - Return detailed itemized pricing breakdown.
+
+### 4. Code & QR Token Logic
+- [ ] Implement secure 6-digit code generator in `services/code_service.py`.
+- [ ] Implement signed QR token generation using HMAC-SHA256.
+
+### 5. Receipts & History Endpoints
+- [ ] Implement `GET /api/user/jobs` with pagination.
+- [ ] Build `services/receipt_generator.py` with ReportLab:
+  - Generates A4 invoice PDF with logo, student details, line items, and transaction ref.
+- [ ] Implement `GET /api/jobs/{id}/receipt`.
+
+### 6. Kiosk Fleet Endpoints & Auto-Cleanup
+- [ ] Implement lookup, claim lock, download stream, status reporting, and heartbeat.
+- [ ] Implement background task / cron job to purge temporary files older than 24 hours.
 
 ---
 
@@ -65,24 +106,10 @@ A fully functional FastAPI backend server with database persistence where all AP
 
 | File | Purpose |
 |---|---|
-| `backend/app/main.py` | Route handlers (replace all 501 stubs with live logic) |
-| `backend/app/models.py` | SQLAlchemy ORM models |
-| `backend/app/schemas.py` | Pydantic validation schemas |
-| `backend/app/database.py` | Database engine and session dependency |
-| `backend/app/services/pricing.py` | Calculation engine for sheets, duplex, and EGP prices |
-
----
-
-## 🔌 Interfaces & Contracts You Depend On
-
-- **Frontend**: Expects responses matching `backend/app/schemas.py`.
-- **Payment (Member 3)**: Provides `payment_service.py` to handle real/simulated transactions.
-- **AI (Member 4)**: Provides `ai_service.py` to return summarized PDF paths for `ai-summarize` route.
-- **Kiosk (Member 5)**: Calls kiosk routes with `X-Kiosk-ID` and `X-Kiosk-Secret`.
-
----
-
-## 🔮 Future Enhancements (Phase 2)
-- Clerk JWT authentication verification on student endpoints.
-- Celery / Redis background queue for heavy file processing.
-- S3 / MinIO cloud object storage for uploads instead of local disk.
+| `backend/app/main.py` | FastAPI application and all REST route definitions |
+| `backend/app/models.py` | PostgreSQL SQLAlchemy data models |
+| `backend/app/schemas.py` | Pydantic v2 validation models |
+| `backend/app/auth.py` | Clerk JWT verification and user dependency |
+| `backend/app/services/pricing.py` | Pricing and page calculation engine |
+| `backend/app/services/receipt_generator.py` | ReportLab PDF invoice generation |
+| `backend/app/services/code_service.py` | 6-digit code and QR token generators |

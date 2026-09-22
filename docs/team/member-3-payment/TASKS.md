@@ -1,56 +1,85 @@
 # Member 3 — Payment & Security Engineer
 
-> **Role**: Financial transactions — student payment processing, mobile wallets, and webhook security.  
-> **Tech Stack**: Paymob API, HMAC-SHA512 verification, Python `secrets`, Requests/Httpx  
-> **Sprint Timeline**: 3 Days (AI-Accelerated)
+> **Role**: The financial engine and system security — multi-method Egyptian payments (Cards, Mobile Wallets, Fawry), pre-loaded student wallets, automated refunds, HMAC webhook verification, and API security hardening.  
+> **Tech Stack**: Paymob API, HMAC-SHA512, Python `secrets`, slowapi (Rate Limiting), PyJWT  
+> **Target**: Full Final Production Product (All Features)
 
 ---
 
-## 🎯 FINAL RESULT DELIVERABLE
+## 🎯 FINAL RESULT DELIVERABLES
 
-A complete, production-ready payment module in `backend/app/services/payment_service.py` supporting:
-1. **Paymob & Mobile Wallets** (Vodafone Cash, Orange Money, Etisalat Cash, Cards) in sandbox/live mode.
-2. Secure **Webhook Listener** (`POST /api/payments/webhook`) with HMAC signature verification to prevent spoofing.
-3. Automated transition of jobs from `unpaid` to `paid` and pickup code generation upon successful payment.
-4. Robust **Simulation Mode** (`PAYMENT_LIVE_MODE=false`) so the team can develop offline without spending real money.
+A production-ready financial and security infrastructure in `backend/app/services/payment_service.py` and security modules featuring:
 
-### 🧪 The Proof Test (Acceptance Criteria)
-> Run a test script sending a simulated Paymob transaction webhook to `POST /api/payments/webhook`:
-> 1. An invalid HMAC hash is rejected with `401 Unauthorized`.
-> 2. A valid HMAC hash marks the targeted `PrintJob` as `paid`, populates `payment_ref` and `paid_at`, and outputs the generated 6-digit pickup code.
+1. **Multi-Method Egyptian Payment Gateway**:
+   - **Paymob Credit/Debit Cards** (Visa, Mastercard, Meeza).
+   - **Mobile Wallets** (Vodafone Cash, Orange Money, Etisalat Cash, WE Pay) with phone number input.
+   - **Fawry Reference Codes** with 24-hour cash payment expiry.
+   - **Pre-Loaded Student Wallet**: Authenticated students can top up their account balance and pay with a single tap.
+
+2. **Secure HMAC-SHA512 Webhook Engine**:
+   - Webhook listener (`POST /api/payments/webhook`) receiving Paymob transaction notifications.
+   - Verifies Paymob's HMAC-SHA512 signature by alphabetizing transaction keys and using `hmac.compare_digest()` to prevent timing attacks.
+   - Automatically marks the targeted `PrintJob` as `paid`, sets `paid_at`, and triggers pickup code / QR token issuance.
+
+3. **Automated Refund System**:
+   - Integrates with Paymob Refund API.
+   - When Member 5's Kiosk agent reports a fatal print failure (paper jam, out of toner, machine offline), the system automatically initiates a refund back to the student's card/wallet or credits their student wallet immediately.
+
+4. **API Security & Anti-Abuse Hardening**:
+   - **Rate Limiting**: Configured per IP (e.g. max 10 uploads/min, 20 code lookups/min) using `slowapi` to defend against DoS/brute-force attacks.
+   - **Pickup Code Lifecycle**: Cryptographically secure 6-digit codes generated using `secrets.choice()`, valid for exactly 24 hours, and atomically invalidated upon print completion.
+   - **CORS & Headers**: Strict CORS origin whitelisting, HTTP Strict Transport Security (HSTS), and Content Security Policy (CSP).
+
+5. **Dual Mode (Production & Simulation)**:
+   - Full live Paymob gateway support when credentials are provided.
+   - High-fidelity offline simulation mode for local team development without incurring real bank charges.
 
 ---
 
-## ⚡ 3-Day Sprint Plan
+## 🧪 Acceptance Criteria & Proof Tests
 
-### Day 1: Simulation Mode & Pickup Code Security
-- [ ] Review `backend/app/services/payment_service.py`.
-- [ ] Build high-reliability offline simulation flow:
-  - If `PAYMENT_LIVE_MODE=false`, `initiate_payment()` immediately marks job paid and generates pickup code.
-- [ ] Ensure pickup code generator in Python is cryptographically secure:
-  - Alphanumeric (uppercase letters + numbers), 6 chars.
-  - Exclude confusing characters: `0`, `O`, `1`, `I`, `L`.
-  - Collision check against database to ensure uniqueness.
-- [ ] Verify file upload security headers and CORS origin restrictions with Member 2 & 6.
+- [ ] **Test 1 (Mobile Wallet Payment Flow)**: Select Vodafone Cash with a test Egyptian mobile number (`010xxxxxxxx`) → backend communicates with Paymob and returns the wallet confirmation prompt.
+- [ ] **Test 2 (HMAC Webhook Verification)**:
+  - Send a fake webhook with invalid HMAC signature → rejected with `401 Unauthorized`.
+  - Send a valid signed webhook payload → job status updates to `paid` and student receives pickup code in real time.
+- [ ] **Test 3 (Student Wallet Checkout)**: Sign in with a user having `wallet_balance = 50.00 EGP`. Purchase a 10.00 EGP print job using the wallet method → balance drops to `40.00 EGP` and job instantly transitions to `paid`.
+- [ ] **Test 4 (Automated Refund)**: Trigger a print failure callback for a paid job → Paymob refund endpoint is invoked or student wallet is refunded `10.00 EGP` with a notification record.
+- [ ] **Test 5 (Rate Limiting)**: Spam the upload endpoint with 20 rapid requests → receive `429 Too Many Requests`.
 
-### Day 2: Paymob Gateway Integration
-- [ ] Sign up for Paymob Sandbox account / get API keys (`PAYMOB_API_KEY`, `PAYMOB_INTEGRATION_ID`, `PAYMOB_HMAC_SECRET`).
-- [ ] Implement Paymob Payment Intent creation:
-  - Step 1: Authentication request (obtain token).
-  - Step 2: Order registration (amount in cents, e.g. 5.00 EGP = 500 cents).
-  - Step 3: Payment key generation (specifying integration ID for Mobile Wallets / Card).
-- [ ] Return payment URL or iframe link to the frontend for student redirection.
+---
 
-### Day 3: Webhook Verification & End-to-End Test
-- [ ] Implement `verify_paymob_hmac(payload, received_hmac)`:
-  - Concatenate Paymob callback fields in exact alphabetical order according to Paymob docs.
-  - Calculate HMAC-SHA512 with `PAYMOB_HMAC_SECRET`.
-  - Securely compare using `hmac.compare_digest()`.
+## ⚡ Step-by-Step Implementation Checklist
+
+### 1. Paymob Client Architecture
+- [ ] Build `services/payment_service.py` with classes:
+  - `PaymobClient`: handles auth tokens, order registration, and payment key generation.
+  - `PaymentSimulator`: handles local mock payments.
+- [ ] Configure `.env` keys:
+  - `PAYMOB_API_KEY`, `PAYMOB_INTEGRATION_ID_CARD`, `PAYMOB_INTEGRATION_ID_WALLET`, `PAYMOB_HMAC_SECRET`.
+
+### 2. Multi-Method Checkout Routes
+- [ ] Implement `POST /api/jobs/{id}/pay`:
+  - Input: `{ payment_method: "card" | "vodacash" | "fawry" | "wallet", phone_number: str }`.
+  - If `wallet`: check user balance, deduct cost in a database transaction, mark paid.
+  - If `vodacash` or `card`: create Paymob payment intent and return redirect/iframe URL.
+
+### 3. HMAC Webhook & Transaction Reconciliation
 - [ ] Implement `POST /api/payments/webhook`:
-  - Verify HMAC signature.
-  - Check transaction `success: true`.
-  - Update job status to `paid` in DB and assign pickup code.
-- [ ] Run **The Proof Test** script and document credentials in `.env.example`.
+  - Extract query params / body.
+  - Reconstruct HMAC string from Paymob's 17 designated fields in alphabetical order.
+  - Verify signature with `hmac.compare_digest`.
+  - On `success == True`: update `PrintJob` to `paid` and generate pickup code.
+
+### 4. Automatic Refund Engine
+- [ ] Implement `process_refund(job_id, reason)`:
+  - If original payment was via `wallet`: re-credit student's `wallet_balance`.
+  - If via Paymob: invoke Paymob Transaction Refund API using original transaction ID.
+  - Record refund details in `payments` table.
+
+### 5. Security & Rate Limiting Hardening
+- [ ] Install and configure `slowapi` middleware in `main.py`.
+- [ ] Add rate-limit decorators to public endpoints (`/api/upload`, `/api/kiosk/jobs/lookup`).
+- [ ] Add CORS security settings and secure cookies configuration.
 
 ---
 
@@ -58,20 +87,7 @@ A complete, production-ready payment module in `backend/app/services/payment_ser
 
 | File | Purpose |
 |---|---|
-| `backend/app/services/payment_service.py` | Core Paymob API calls and simulation logic |
-| `backend/app/main.py` *(Payment routes)* | `POST /api/jobs/{id}/pay` and `POST /api/payments/webhook` |
-| `.env.example` *(Payment keys)* | Documentation for Paymob API keys and HMAC secrets |
-
----
-
-## 🔌 Interfaces & Contracts You Depend On
-
-- **Backend DB (Member 2)**: Update `PrintJob` status, `paid_at`, `payment_method`, and `pickup_code`.
-- **Frontend (Member 1)**: Receive payment method (`vodacash`, `card`) and return redirect URL or instant paid response.
-
----
-
-## 🔮 Future Enhancements (Phase 2)
-- Direct InstaPay API integration once CBE approves aggregator access.
-- Automated refund webhook if printing fails at the kiosk.
-- Daily financial reconciliation CSV export for campus administration.
+| `backend/app/services/payment_service.py` | Paymob integration, wallet logic, and simulation engine |
+| `backend/app/services/refund_service.py` | Automated student refund workflows |
+| `backend/app/security.py` | HMAC verification, slowapi rate-limiter, and header guards |
+| `backend/app/main.py` *(Payment endpoints)* | `POST /pay`, `POST /webhook`, and `POST /wallet/topup` |

@@ -90,14 +90,15 @@ printstation/
 - [Deployment Guide](docs/deployment-guide.md)
 - [Contributing](docs/CONTRIBUTING.md)
 
-## Team & Deliverables (3-Day AI Sprint)
+## Team & Deliverables (Full Final Product)
 
-| Member | Component | Key Deliverable | Task Contract |
+| Member | Component | Key Production Deliverables | Task Contract |
 |---|---|---|---|
-| **1 — Frontend** | Web App UI | Responsive bilingual UI (Upload → Options → Pay → Pickup Code) | [TASKS.md](docs/team/member-1-frontend/TASKS.md) |
-| **2 — Backend** | Core API & DB | Live REST API & DB models replacing all stubs + lifecycle test | [TASKS.md](docs/team/member-2-backend/TASKS.md) |
-| **3 — Payment** | Paymob & Security | Paymob/Wallet integration + HMAC webhook verification | [TASKS.md](docs/team/member-3-payment/TASKS.md) |
-| **4 — AI** | Document Processing | Gemini summarization to PDF + OpenCV phone photo cleaner | [TASKS.md](docs/team/member-4-ai/TASKS.md) |
-| **5 — Kiosk** | Kiosk Agent & HW | Touchscreen UI + CUPS daemon with claim & auto-print | [TASKS.md](docs/team/member-5-kiosk/TASKS.md) |
-| **6 — DevOps** | Docker & Cloud | One-command `docker compose up -d` + CI/CD pipeline | [docs/team/member-6-devops/TASKS.md](docs/team/member-6-devops/TASKS.md) |
+| **1 — Frontend** | Student Web App & PWA | Clerk Auth, PDF.js preview, options, AI studio, wallets, print history & receipts, dual PIN/QR pickup, Arabic RTL, PWA | [TASKS.md](docs/team/member-1-frontend/TASKS.md) |
+| **2 — Backend** | Core API & Systems | FastAPI + Postgres, Clerk JWT auth, DOCX/PPTX to PDF, pricing engine, receipt PDF generator, kiosk fleet API, cleanup cron | [TASKS.md](docs/team/member-2-backend/TASKS.md) |
+| **3 — Payment** | Payments & Security | Paymob (Cards, Wallets, Fawry), student wallet balance, HMAC webhook engine, automatic refunds, slowapi rate-limits | [TASKS.md](docs/team/member-3-payment/TASKS.md) |
+| **4 — AI** | Document Intelligence | 4-mode Gemini summarizer to PDF, ReportLab compiler, OpenCV phone photo cleaner & deskewer, exam flashcards/quizzes | [TASKS.md](docs/team/member-4-ai/TASKS.md) |
+| **5 — Kiosk** | Kiosk Station & HW | Touchscreen UI, camera QR code scanner, full CUPS printer daemon, hardware telemetry (paper/toner %), post-print shredder | [TASKS.md](docs/team/member-5-kiosk/TASKS.md) |
+| **6 — DevOps** | Cloud, Admin & QA | Admin Web Dashboard (fleet monitor, revenue analytics), Docker Compose orchestration, Prometheus/Grafana, CI/CD | [docs/team/member-6-devops/TASKS.md](docs/team/member-6-devops/TASKS.md) |
+
 

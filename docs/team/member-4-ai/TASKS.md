@@ -1,55 +1,94 @@
-# Member 4 — AI & Document Processing Engineer
+# Member 4 — AI & Document Intelligence Engineer
 
-> **Role**: Intelligence features — turning PrintStation into an AI study assistant that produces clean, concise printouts.  
-> **Tech Stack**: Google Gemini API, ReportLab, OpenCV, pypdf  
-> **Sprint Timeline**: 3 Days (AI-Accelerated)
-
----
-
-## 🎯 FINAL RESULT DELIVERABLE
-
-A complete document intelligence module in `backend/app/services/ai_service.py` providing:
-1. **AI Study Notes & Summarization**: Extracts text from student PDF slides/handouts, queries Gemini with 4 tailored academic prompts (Key Points, Study Notes, Exam Prep, Custom), and compiles the summary into a clean, professional, printable PDF using `reportlab`.
-2. **Phone Photo → Clean Document**: An OpenCV processing pipeline that takes student smartphone photos of handwritten notes/whiteboards, deskews them, removes shadows, enhances contrast, and converts them into crisp, printer-ready monochrome PDFs.
-3. **Simulation Mode**: Instant fallback summary generation when running offline without a Gemini API key.
-
-### 🧪 The Proof Test (Acceptance Criteria)
-> 1. Pass a 20-page university lecture PDF to `ai_service.py` → in under 15 seconds, receive a beautiful, formatted 2-page PDF summary in `ai_output/` with title, bullet points, and page numbers.
-> 2. Pass a shadowed, angled phone photo of whiteboard notes to the OpenCV cleaner → receive a deskewed, pure black-and-white PDF with crisp legible text.
+> **Role**: All intelligent features — turning PrintStation into a comprehensive campus AI study assistant that summarizes, cleans, and formats academic materials for printing.  
+> **Tech Stack**: Google Gemini 1.5/2.0 API, OpenCV, ReportLab, pypdf, Tesseract OCR / Gemini Vision  
+> **Target**: Full Final Production Product (All Features)
 
 ---
 
-## ⚡ 3-Day Sprint Plan
+## 🎯 FINAL RESULT DELIVERABLES
 
-### Day 1: Text Extraction & Gemini Integration
-- [ ] Review `backend/app/services/ai_service.py`.
-- [ ] Set up Gemini API key in `backend/.env` (`GEMINI_API_KEY=...`).
-- [ ] Implement text extraction from uploaded PDF using `pypdf.PdfReader`:
-  - Handle multi-page documents.
-  - Add character/token limit guardrails to avoid hitting API context limits.
-- [ ] Implement Gemini prompt runner supporting 4 academic modes:
-  - `key_points`: Bullet-point highlights of core concepts.
-  - `study_notes`: Structured lecture notes with section headings.
-  - `exam_prep`: Definitions, formulas, and high-probability exam questions.
-  - `custom`: Append user-provided instructions to the system prompt.
-- [ ] Support English and Arabic lecture text seamlessly.
+A complete, production-grade document intelligence engine in `backend/app/services/ai_service.py` featuring:
 
-### Day 2: Printable PDF Generation (ReportLab)
-- [ ] Build `generate_summary_pdf(summary_text, target_path)` using ReportLab:
-  - Clean typographic layout (title, date, formatted headings, bullet points).
-  - Proper margin setup for A4 paper printing.
-  - Page numbering footer (`Page X of Y`).
-  - Calculate physical page count of the generated summary PDF and return it to the backend so the student is charged the correct lower price (e.g. 2 pages instead of 20).
+1. **4-Mode Academic PDF Summarizer**:
+   - Extracts text from university slide decks and PDF handouts using `pypdf`.
+   - Implements chunking and map-reduce aggregation for long documents (up to 100+ pages).
+   - Prompts Google Gemini with 4 tailored academic modes:
+     - **Key Points**: Bulleted summary of essential concepts.
+     - **Study Notes**: Structured outlines with major headings, sub-headings, and formulas.
+     - **Exam Prep**: Key definitions, high-yield exam facts, and potential test questions.
+     - **Custom Prompt**: Student provides their own prompt (e.g. "Focus only on chapter 3 formulas").
+   - Full support for English and Arabic university curricula.
 
-### Day 3: OpenCV Document Enhancer & Pipeline Wiring
-- [ ] Implement OpenCV document photo cleanup:
-  - Step 1: Grayscale conversion.
-  - Step 2: Gaussian blur & adaptive thresholding (`cv2.adaptiveThreshold` or Otsu).
-  - Step 3: Perspective transform / deskew (detect document corners).
-  - Step 4: Shadow removal and contrast stretching.
-  - Step 5: Convert cleaned image array into a standard printable PDF.
-- [ ] Wire the service into `POST /api/jobs/{id}/ai-summarize` and `GET /api/jobs/{id}/ai-preview`.
-- [ ] Execute **The Proof Test** with sample university lecture slides.
+2. **Automated Print-Ready PDF Publisher (ReportLab)**:
+   - Compiles raw Gemini markdown responses into a beautifully designed A4 PDF.
+   - Clean academic formatting: document title, date, headings, bold callouts, page numbering footer (`Page X of Y`).
+   - Dynamically calculates the new condensed page count (e.g. reducing a 40-page lecture slide deck to a 3-page summary) and updates the backend pricing engine so students save money.
+
+3. **Phone Photo → Clean Document Scanner (OpenCV)**:
+   - Takes raw smartphone photos of handwritten notebooks, lecture slides, or whiteboards.
+   - Executes image processing pipeline:
+     - Edge detection & contour extraction to find document boundary.
+     - 4-point perspective transform (deskewing).
+     - Illumination correction & shadow removal.
+     - Adaptive thresholding (Otsu / Gaussian binarization) to convert noisy camera photos into crisp, high-contrast monochrome pages suitable for laser printing.
+     - Compiles images into a single multi-page PDF.
+
+4. **Exam Flashcard & Quiz Generator**:
+   - Transforms lecture slides into printable **Study Flashcards** (2-column layout designed for double-sided printing: questions on front, answers on back).
+   - Generates multiple-choice practice quizzes with an answer key appendix.
+
+5. **Arabic OCR for Scanned Handouts**:
+   - Integrates Gemini Vision / Tesseract OCR to extract text from scanned, image-only Arabic lecture PDFs before feeding into the summarizer.
+
+---
+
+## 🧪 Acceptance Criteria & Proof Tests
+
+- [ ] **Test 1 (Lecture Summarization to PDF)**: Upload a 30-page PDF slide deck → in under 15 seconds, receive a formatted 3-page printable PDF in `ai_output/` with crisp typography, headers, and bullet points.
+- [ ] **Test 2 (Bilingual Arabic Processing)**: Feed an Arabic university lecture PDF into the summarizer → receive an accurate, grammatically correct Arabic summary PDF with proper right-to-left layout.
+- [ ] **Test 3 (OpenCV Photo Cleaner)**: Provide a poorly lit, angled smartphone photo of a whiteboard with handwriting → OpenCV pipeline outputs a deskewed, pure black-and-white page with crisp legible text and zero shadows.
+- [ ] **Test 4 (Flashcard Generator)**: Trigger flashcard mode on a biology slide deck → output PDF contains 10 cleanly formatted study flashcards ready for double-sided cut-out printing.
+- [ ] **Test 5 (Simulation Fallback)**: Unset `GEMINI_API_KEY` → service gracefully falls back to instant local mock summary without throwing unhandled exceptions.
+
+---
+
+## ⚡ Step-by-Step Implementation Checklist
+
+### 1. Gemini Client & Text Extraction Pipeline
+- [ ] Set up `google-generativeai` client in `backend/app/services/ai_service.py`.
+- [ ] Build robust `extract_text(pdf_path)` using `pypdf`:
+  - Detect if PDF contains digital text or scanned images.
+  - If scanned images: dispatch to Gemini Vision OCR.
+  - Implement token-aware sliding window / chunking for large PDFs.
+
+### 2. Prompt Engineering & Summarization Modes
+- [ ] Create specialized academic system prompts for:
+  - `key_points`, `study_notes`, `exam_prep`, and `custom`.
+- [ ] Implement retry logic with exponential backoff for Gemini API rate limits.
+- [ ] Parse returned markdown and sanitize output.
+
+### 3. ReportLab Document Compiler
+- [ ] Build `compile_summary_pdf(markdown_text, output_path)`:
+  - Custom `SimpleDocTemplate` with standard A4 margins.
+  - Stylesheet for headings, paragraph spacing, bullet indentation, and code/math blocks.
+  - Page number canvas callback for running headers and footers.
+  - Return final physical page count to backend.
+
+### 4. OpenCV Photo Enhancement Pipeline
+- [ ] Build `clean_document_photo(image_path, output_pdf_path)`:
+  - `cv2.findContours` to isolate document rectangle.
+  - `cv2.getPerspectiveTransform` to straighten angled photos.
+  - Background illumination leveling (divide by Gaussian blurred copy).
+  - `cv2.adaptiveThreshold` for crisp monochrome binarization.
+  - Export array of cleaned images to PDF.
+
+### 5. Flashcard & Quiz Formatter
+- [ ] Build `generate_flashcards(text, output_path)`:
+  - Two-column card layout formatted for duplex printing.
+- [ ] Wire all AI endpoints into FastAPI routes:
+  - `POST /api/jobs/{id}/ai-summarize`
+  - `GET /api/jobs/{id}/ai-preview`
 
 ---
 
@@ -57,20 +96,7 @@ A complete document intelligence module in `backend/app/services/ai_service.py` 
 
 | File | Purpose |
 |---|---|
-| `backend/app/services/ai_service.py` | Text extraction, Gemini API prompts, PDF generation, OpenCV cleaner |
-| `backend/app/main.py` *(AI routes)* | `POST /api/jobs/{id}/ai-summarize` and `GET /api/jobs/{id}/ai-preview` |
-| `ai_output/` | Directory where processed and summarized PDFs are stored |
-
----
-
-## 🔌 Interfaces & Contracts You Depend On
-
-- **Backend (Member 2)**: Reads original file path from `PrintJob`, writes generated PDF path to `ai_result_filename`, and updates `page_count` and `total_price`.
-- **Frontend (Member 1)**: Receives summary preview text to display in the UI before printing.
-
----
-
-## 🔮 Future Enhancements (Phase 2)
-- Tesseract OCR for scanned image-only Arabic textbooks.
-- Practice quiz & flashcard auto-generation from lecture slides.
-- Multi-document comparison and synthesis.
+| `backend/app/services/ai_service.py` | Core Gemini prompts, summarization, and mock fallback |
+| `backend/app/services/cv_service.py` | OpenCV photo cleaning, deskewing, and shadow removal |
+| `backend/app/services/pdf_compiler.py` | ReportLab printable PDF and flashcard generation |
+| `ai_output/` | Directory where all AI-generated PDFs are saved |
