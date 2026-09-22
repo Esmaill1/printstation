@@ -1,103 +1,43 @@
 """
-PrintStation Kiosk — CUPS Printing Handler.
+PrintStation Kiosk — CUPS Printing Handler (Skeleton / Interface Scheme).
 
-Wraps CUPS `lp` commands with automatic simulation fallback for dev environments.
-Owner: Member 5 (Kiosk)
-Ref: docs/hardware-guide.md §4
+Owner: Member 5 (Kiosk & Hardware Engineer)
+Reference: docs/hardware-guide.md §4, docs/team/member-5-kiosk/TASKS.md
+
+Responsibilities to implement:
+- Translate PrintStation options (duplex, color, copies, N-up) into CUPS flags
+- Execute printing via `lp` command or `pycups`
+- Monitor CUPS print queue and detect errors (paper jam, out of toner, offline)
+- Fallback simulation when running on non-Linux dev machines
 """
 
-import logging
-import platform
-import shutil
-import subprocess
 from pathlib import Path
-from typing import Dict, Any
-
-from config import PRINTER_NAME
-
-logger = logging.getLogger("kiosk.cups")
+from typing import Dict, Any, Tuple
 
 
 class CupsHandler:
-    def __init__(self, printer_name: str = PRINTER_NAME):
+    def __init__(self, printer_name: str = "PDF_Virtual_Printer"):
         self.printer_name = printer_name
-        self.is_linux = platform.system() == "Linux"
-        self.has_lp = shutil.which("lp") is not None
 
     def build_lp_options(self, options: Dict[str, Any]) -> list[str]:
         """
-        Translate PrintStation print options into CUPS `lp -o` arguments.
+        Translate options dict into CUPS command arguments.
+        
+        TODO (Member 5):
+        - Color: -o ColorModel=Gray or CMYK
+        - Duplex: -o sides=two-sided-long-edge / short-edge / one-sided
+        - N-up: -o number-up=2 / 4
+        - Copies: -n <copies>
         """
-        lp_args = []
+        raise NotImplementedError("Member 5 to implement: build_lp_options")
 
-        # Color mode
-        if options.get("color_mode") == "bw":
-            lp_args.extend(["-o", "ColorModel=Gray"])
-        elif options.get("color_mode") == "color":
-            lp_args.extend(["-o", "ColorModel=CMYK"])
-
-        # Duplex
-        duplex = options.get("duplex", "single")
-        if duplex == "long_edge":
-            lp_args.extend(["-o", "sides=two-sided-long-edge"])
-        elif duplex == "short_edge":
-            lp_args.extend(["-o", "sides=two-sided-short-edge"])
-        else:
-            lp_args.extend(["-o", "sides=one-sided"])
-
-        # Pages per sheet (N-up)
-        nup = options.get("pages_per_sheet", 1)
-        if nup in (2, 4):
-            lp_args.extend(["-o", f"number-up={nup}"])
-
-        # Copies
-        copies = options.get("copies", 1)
-        if copies > 1:
-            lp_args.extend(["-n", str(copies)])
-
-        # Page range
-        page_range = options.get("page_range")
-        if page_range and page_range.lower() != "all":
-            lp_args.extend(["-o", f"page-ranges={page_range}"])
-
-        # Orientation
-        orientation = options.get("orientation", "portrait")
-        if orientation == "landscape":
-            lp_args.extend(["-o", "landscape"])
-
-        return lp_args
-
-    def print_file(self, file_path: Path, options: Dict[str, Any]) -> tuple[bool, str]:
+    def print_file(self, file_path: Path, options: Dict[str, Any]) -> Tuple[bool, str]:
         """
-        Send a PDF file to CUPS or simulate printing.
-        Returns: (success: bool, message: str)
+        Send a PDF file to the printer via CUPS or simulate.
+
+        TODO (Member 5):
+        1. If 'lp' is not found, log simulation and return (True, "simulated").
+        2. Run subprocess.run(["lp", "-d", self.printer_name, ...]).
+        3. Return (success: bool, message: str).
         """
-        if not file_path.exists():
-            return False, f"File not found: {file_path}"
-
-        if not self.has_lp:
-            logger.info(
-                f"[SIMULATION] 'lp' command not found on {platform.system()}. "
-                f"Simulating print of {file_path.name} with options: {options}"
-            )
-            return True, "simulated_success"
-
-        cmd = ["lp", "-d", self.printer_name]
-        cmd.extend(self.build_lp_options(options))
-        cmd.append(str(file_path))
-
-        logger.info(f"Executing print command: {' '.join(cmd)}")
-        try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                check=True,
-                timeout=30,
-            )
-            return True, result.stdout.strip()
-        except subprocess.CalledProcessError as e:
-            logger.error(f"CUPS error: {e.stderr}")
-            return False, e.stderr.strip()
-        except subprocess.TimeoutExpired:
-            return False, "CUPS print command timed out"
+        raise NotImplementedError("Member 5 to implement: print_file")

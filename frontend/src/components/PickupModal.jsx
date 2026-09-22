@@ -1,39 +1,31 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useI18n } from '../i18n';
 
+/**
+ * PickupModal Component (Skeleton / Scheme).
+ * 
+ * Owner: Member 1 (Frontend Lead)
+ * Ref: docs/team/member-1-frontend/TASKS.md §6
+ * 
+ * TODO (Member 1):
+ * 1. Render high-contrast 6-digit pickup code with one-click copy to clipboard.
+ * 2. Render dynamic QR code SVG for touchless scanning at the kiosk camera.
+ * 3. Display campus kiosk pickup location instructions.
+ */
 export function PickupModal({ job, onClose }) {
   const { t } = useI18n();
-  const [copied, setCopied] = useState(false);
 
   if (!job) return null;
-
-  const copyCode = () => {
-    if (job.pickup_code) {
-      navigator.clipboard.writeText(job.pickup_code);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
 
   return (
     <div className="modal-backdrop">
       <div className="modal-card">
-        <div className="modal-success-badge">✓</div>
         <h2>{t('pickupCodeHeader')}</h2>
         <p className="modal-subtext">{t('pickupCodeInstruction')}</p>
 
-        <div className="pickup-code-display" onClick={copyCode} title="Click to copy">
+        {/* Member 1: Render 6-digit PIN and dynamic QR code */}
+        <div className="pickup-code-display">
           <span className="code-letters">{job.pickup_code || '------'}</span>
-          <span className="copy-badge">{copied ? 'Copied!' : 'Copy'}</span>
-        </div>
-
-        <div className="kiosk-note">
-          📍 {t('kioskLocation')}
-        </div>
-
-        <div className="job-summary-row">
-          <span>{job.filename}</span>
-          <span>{job.page_count} pages • {job.total_price} EGP</span>
         </div>
 
         <button className="modal-close-btn" onClick={onClose}>

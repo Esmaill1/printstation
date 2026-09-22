@@ -1,119 +1,81 @@
 """
-PrintStation — Payment Service.
+PrintStation — Payment Service (Skeleton / Interface Scheme).
 
-Handles payment processing — simulated mode and Paymob integration.
+Owner: Member 3 (Payment & Security Engineer)
+Reference: docs/architecture.md §3.4, docs/team/member-3-payment/TASKS.md
 
-Owner: Member 3 (Payment & Security)
-Reference: docs/architecture.md §3.4, docs/decisions/003-paymob-payment.md
+Responsibilities to implement:
+- Paymob payment intent creation (Cards, Mobile Wallets, Fawry)
+- Offline simulation mode fallback (when PAYMENT_LIVE_MODE=false)
+- Secure 6-digit collision-free pickup code generation
+- Paymob HMAC-SHA512 webhook signature verification
+- Automatic refund processing on print failures
 """
 
-import secrets
-import string
-from datetime import datetime
-
+from typing import Dict, Any
 from sqlalchemy.orm import Session
-from fastapi import HTTPException
 
 from app.config import get_settings
-from app.models import PrintJob
 
 settings = get_settings()
 
-# Characters for pickup codes — no ambiguous chars (0/O, 1/I/L)
-CODE_CHARS = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
 
-
-def generate_pickup_code(db: Session, max_retries: int = 10) -> str:
+def generate_pickup_code(db: Session) -> str:
     """
-    Generate a unique 6-digit alphanumeric pickup code.
+    Generate a cryptographically secure, unique 6-digit alphanumeric pickup code.
 
-    Uses cryptographically secure randomness.
-    Retries on collision (extremely unlikely with 30^6 = 729M combinations).
+    TODO (Member 3):
+    1. Use Python `secrets.choice()` with uppercase letters and digits.
+    2. Exclude ambiguous characters (0, O, 1, I, L).
+    3. Verify uniqueness against the database.
     """
-    for _ in range(max_retries):
-        code = "".join(secrets.choice(CODE_CHARS) for _ in range(6))
-        # Check uniqueness
-        existing = db.query(PrintJob).filter(PrintJob.pickup_code == code).first()
-        if not existing:
-            return code
-    raise HTTPException(status_code=500, detail="Could not generate unique pickup code")
+    raise NotImplementedError("Member 3 to implement: generate_pickup_code")
 
 
 async def process_payment(
-    job: PrintJob,
+    job_id: int,
     payment_method: str,
-    db: Session,
-) -> dict:
+    phone_number: str = "",
+    db: Session = None,
+) -> Dict[str, Any]:
     """
-    Process payment for a print job.
+    Process payment for a print job (Live Paymob or local simulation).
 
-    In simulated mode: instantly marks as paid.
-    In live mode: creates Paymob payment intent.
-
-    Returns dict with: pickup_code, payment_ref, message
+    TODO (Member 3):
+    1. If simulated: instantly transition job to 'paid' and generate pickup code.
+    2. If live Paymob: authenticate, register order, generate payment key, and return redirect/iframe URL.
+    3. If student wallet: check user balance, deduct cost atomically, and mark paid.
+    
+    Returns:
+        dict: {
+            "status": "paid" | "pending",
+            "pickup_code": Optional[str],
+            "payment_url": Optional[str],
+            "payment_ref": Optional[str],
+        }
     """
-    if job.status != "ready_to_pay":
-        raise HTTPException(
-            status_code=400,
-            detail=f"Job cannot be paid — current status is '{job.status}'",
-        )
-
-    if payment_method == "simulated" or not settings.is_payment_live:
-        return await _process_simulated(job, db)
-    else:
-        return await _process_paymob(job, payment_method, db)
+    raise NotImplementedError("Member 3 to implement: process_payment")
 
 
-async def _process_simulated(job: PrintJob, db: Session) -> dict:
-    """Simulated payment — marks job as paid immediately."""
-    pickup_code = generate_pickup_code(db)
-
-    job.status = "paid"
-    job.payment_method = "simulated"
-    job.payment_ref = f"SIM-{secrets.token_hex(4).upper()}"
-    job.pickup_code = pickup_code
-    job.paid_at = datetime.utcnow()
-    db.commit()
-
-    return {
-        "pickup_code": pickup_code,
-        "payment_ref": job.payment_ref,
-        "message": f"Payment successful. Use code {pickup_code} at any PrintStation kiosk.",
-    }
-
-
-async def _process_paymob(job: PrintJob, payment_method: str, db: Session) -> dict:
+def verify_paymob_hmac(payload: Dict[str, Any], received_hmac: str) -> bool:
     """
-    Real Paymob payment flow.
+    Verify Paymob webhook HMAC-SHA512 signature to prevent spoofing.
 
-    TODO (Member 3): Implement this.
-    Steps:
-        1. POST /auth/tokens → get auth token
-        2. POST /ecommerce/orders → register order
-        3. POST /acceptance/payment_keys → get payment key
-        4. Return payment URL to frontend
-    See: docs/diagrams/sequence-diagrams.md §3
+    TODO (Member 3):
+    1. Sort designated callback fields alphabetically according to Paymob docs.
+    2. Concatenate values and compute HMAC-SHA512 using settings.paymob_hmac_secret.
+    3. Compare safely using hmac.compare_digest().
     """
-    raise HTTPException(
-        status_code=501,
-        detail="Paymob integration not yet implemented. Use payment_method='simulated'.",
-    )
+    raise NotImplementedError("Member 3 to implement: verify_paymob_hmac")
 
 
-async def handle_paymob_webhook(payload: dict, db: Session) -> dict:
+async def process_refund(job_id: int, reason: str, db: Session) -> bool:
     """
-    Handle Paymob payment confirmation callback.
+    Initiate student refund on print failure.
 
-    TODO (Member 3): Implement this.
-    Steps:
-        1. Verify HMAC signature
-        2. Extract transaction data
-        3. Match to job via payment_ref
-        4. Verify amount matches job price
-        5. Check idempotency (not already processed)
-        6. Generate pickup code, mark as paid
+    TODO (Member 3):
+    1. Check original payment method.
+    2. Call Paymob Refund API or re-credit student's in-app wallet balance.
+    3. Update job status to 'refunded'.
     """
-    raise HTTPException(
-        status_code=501,
-        detail="Paymob webhook handler not yet implemented.",
-    )
+    raise NotImplementedError("Member 3 to implement: process_refund")
