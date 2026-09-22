@@ -103,6 +103,29 @@ A production-ready, high-throughput FastAPI backend server connected to PostgreS
 - [ ] Implement lookup, claim lock, download stream, status reporting, and heartbeat.
 - [ ] Implement background task / cron job to purge temporary files older than 24 hours.
 
+### 7. Admin Dashboard API (for Member 6)
+- [ ] Implement `GET /api/admin/kiosks` — returns all kiosk statuses, paper/toner levels, heartbeat timestamps.
+- [ ] Implement `POST /api/admin/kiosks/{kiosk_id}/maintenance` — toggle maintenance mode on/off.
+- [ ] Implement `GET /api/admin/jobs` — paginated job queue with status/kiosk/search/date filters.
+- [ ] Implement `GET /api/admin/stats?period=week` — aggregated revenue, pages, AI adoption, payment methods breakdown.
+- [ ] Implement `POST /api/admin/jobs/{job_id}/reprint` — re-queue a job for printing on a specific kiosk.
+- [ ] Implement `POST /api/admin/jobs/{job_id}/refund` — manual operator refund to wallet or original payment method.
+- [ ] Add admin role check middleware: verify `role: "admin"` in Clerk JWT for all `/api/admin/*` routes.
+
+> **See full specs**: [`docs/api-reference.md` → Admin Endpoints](file:///d:/Projects/printstation/docs/api-reference.md)
+
+### 8. Student-Facing API Gaps (for Member 1 Frontend)
+- [ ] Implement `GET /api/user/jobs` — paginated print history for authenticated students.
+- [ ] Implement `GET /api/jobs/{id}/receipt` — stream ReportLab PDF invoice for a completed job.
+- [ ] Implement `POST /api/jobs/{id}/reprint` — re-create a job from a past print for re-payment.
+- [ ] Implement `GET /api/user/wallet` — return current student wallet balance.
+- [ ] Implement `POST /api/user/wallet/topup` — initiate wallet top-up via Paymob.
+- [ ] Implement `GET /api/kiosks` — public (no auth) list of campus kiosk locations and statuses.
+- [ ] Update `POST /api/jobs/{id}/pay` — return `redirect_url` for non-instant payment methods (card, vodafone_cash, fawry).
+- [ ] Update `POST /api/jobs/{id}/ai` — expand `mode` to accept `"key_points"`, `"study_notes"`, `"exam_prep"`, `"custom"` (not just `"summarize"`).
+
+> **See full specs**: [`docs/api-reference.md` → Student Endpoints](file:///d:/Projects/printstation/docs/api-reference.md)
+
 ---
 
 ## 📁 Files You Own
