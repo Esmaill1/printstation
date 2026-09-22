@@ -100,5 +100,7 @@ printstation/
 | **4 — AI** | Document Intelligence | 4-mode Gemini summarizer to PDF, ReportLab compiler, OpenCV phone photo cleaner & deskewer, exam flashcards/quizzes | [TASKS.md](docs/team/member-4-ai/TASKS.md) |
 | **5 — Kiosk** | Kiosk Station & HW | Touchscreen UI, camera QR code scanner, full CUPS printer daemon, hardware telemetry (paper/toner %), post-print shredder | [TASKS.md](docs/team/member-5-kiosk/TASKS.md) |
 | **6 — DevOps** | Cloud, Admin & QA | Admin Web Dashboard (fleet monitor, revenue analytics), Docker Compose orchestration, Prometheus/Grafana, CI/CD | [docs/team/member-6-devops/TASKS.md](docs/team/member-6-devops/TASKS.md) |
+| **7 — Research** | Market & Feasibility | Student surveys (100+), competitor analysis, financial model with real quotes, university partnership pathway, legal/regulatory guide | [TASKS.md](docs/team/member-7-research/TASKS.md) |
+| **8 — Marketing** | Growth & Launch | Target audience brief, brand identity spec, go-to-market launch plan, 8-week content calendar, growth KPIs & referral program | [TASKS.md](docs/team/member-8-marketing/TASKS.md) |
 
 

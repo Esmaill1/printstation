@@ -16,7 +16,9 @@ main        ← Production-ready code (protected, requires PR + review)
         ├── feature/paymob-webhook    ← Member 3
         ├── feature/ai-summarize      ← Member 4
         ├── feature/kiosk-agent       ← Member 5
-        └── feature/ci-pipeline       ← Member 6
+        ├── feature/ci-pipeline       ← Member 6
+        ├── research/market-analysis  ← Member 7
+        └── marketing/launch-strategy ← Member 8
 ```
 
 ### Branch Naming
@@ -27,6 +29,8 @@ main        ← Production-ready code (protected, requires PR + review)
 | Bug fix | `fix/<short-description>` | `fix/pricing-duplex-calc` |
 | Hotfix | `hotfix/<short-description>` | `hotfix/payment-webhook-crash` |
 | Documentation | `docs/<short-description>` | `docs/api-reference-update` |
+| Research | `research/<short-description>` | `research/competitor-analysis` |
+| Marketing | `marketing/<short-description>` | `marketing/launch-campaign` |
 
 ### Rules
 
