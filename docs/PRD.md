@@ -157,28 +157,31 @@ uploaded → processing → ready_to_pay → paid → queued → printing → pr
 
 | ID | Feature | Priority | Description |
 |---|---|---|---|
-| W-01 | PDF Upload | P0 | Drag-and-drop or file picker, PDF only, max 50MB |
+| W-01 | Universal File Ingestion | P0 | Drag-and-drop or camera file picker for PDF, DOCX, PPTX, TXT, and Images (JPG/PNG/HEIC), max 50MB |
 | W-02 | Page Count & Pricing | P0 | Automatic page detection, real-time price calculation |
 | W-03 | Print Options | P0 | Color mode (B&W/Color), duplex, pages-per-sheet, page range, copies |
 | W-04 | Document Preview | P0 | In-browser PDF preview with page navigation, zoom, and print simulation |
-| W-05 | Payment | P0 | Single payment method (simulated for prototype, Paymob for launch) |
-| W-06 | Pickup Code | P0 | 6-digit alphanumeric code displayed after payment |
+| W-05 | Multi-Method Payment | P0 | Paymob: Cards, Mobile Wallets (Vodafone Cash), Fawry, and Student Wallet |
+| W-06 | Dual Pickup Code & QR | P0 | 6-digit alphanumeric code + dynamic QR code for touchless scanning |
 | W-07 | Job Status | P0 | Real-time status tracking (paid → printing → done) |
-| W-08 | AI Summarize & Print | P1 | Upload → AI summary → print condensed version |
+| W-08 | AI Summarize & Print | P1 | Upload document → Gemini summary → print condensed version |
+| W-09 | Image OCR to Organized Notes | P1 | Upload photo of lecture notes/whiteboard → extract & organize into structured study guide |
 
 #### Backend API
 
 | ID | Feature | Priority | Description |
 |---|---|---|---|
-| B-01 | File Upload & Storage | P0 | Accept PDF, validate, store with UUID filename |
+| B-01 | Universal File Ingestion & Conversion | P0 | Accept PDF, Word, Slides, and Images; auto-convert and scale to standard A4 PDF |
 | B-02 | PDF Page Counting | P0 | Extract page count using pypdf |
 | B-03 | Pricing Engine | P0 | Calculate price based on pages, color, duplex, N-up, AI fees |
-| B-04 | Pickup Code Generation | P0 | Random 6-digit code, unique per active job |
-| B-05 | Job Queue | P0 | Assign jobs to kiosks, track status transitions |
-| B-06 | Payment Processing | P0 | Create payment intent, handle callback, mark as paid |
-| B-07 | Kiosk API | P0 | Endpoints for kiosk polling, job claiming, status updates |
+| B-04 | Pickup Code & QR Token Generation | P0 | Random 6-digit code + signed QR token |
+| B-05 | Job Queue & State Machine | P0 | Assign jobs to kiosks, track status transitions |
+| B-06 | Payment Processing & Refunds | P0 | Paymob payment intent, HMAC webhook verification, automatic failure refunds |
+| B-07 | Kiosk Fleet API | P0 | Endpoints for kiosk code/QR lookup, job claiming, status updates, heartbeats |
 | B-08 | AI Summarization | P1 | Text extraction → Gemini API → summary text output |
 | B-09 | File Serving | P0 | Serve uploaded PDFs for preview and kiosk download |
+| B-10 | Multimodal Image OCR & Structuring | P1 | Gemini Vision OCR + LLM formatting of handwritten notes into printable PDF |
+
 
 #### Kiosk Agent
 

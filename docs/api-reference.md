@@ -17,7 +17,9 @@
 
 ## Student Endpoints
 
-### Upload File
+### Universal File Ingestion
+
+Upload any supported document or image for printing. Automatically converts Word, PowerPoint, Text, and Images to standard A4 PDF.
 
 ```http
 POST /api/upload
@@ -28,16 +30,16 @@ Content-Type: multipart/form-data
 
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `file` | File (PDF) | Yes | PDF file, max 50MB |
+| `file` | File | Yes | Any supported format: `.pdf`, `.docx`, `.pptx`, `.jpg`, `.png`, `.webp`, `.heic`, `.txt`, max 50MB |
 
 **Response** `200 OK`:
 
 ```json
 {
   "job_id": 42,
-  "filename": "lecture_notes.pdf",
-  "page_count": 60,
-  "estimated_price": 75.00,
+  "filename": "lecture_slides.pptx",
+  "page_count": 24,
+  "estimated_price": 30.00,
   "status": "uploaded",
   "preview_url": "/api/jobs/42/preview"
 }
@@ -47,9 +49,40 @@ Content-Type: multipart/form-data
 
 | Code | Condition |
 |---|---|
-| `400` | File is not a valid PDF |
+| `400` | Unsupported file type or corrupt file |
 | `413` | File exceeds 50MB limit |
 | `422` | No file provided |
+
+---
+
+### Image OCR & Academic Organizer
+
+Upload a smartphone photo of handwritten lecture notes, whiteboard, or textbook pages to extract, clean, and organize into a structured, printable A4 PDF study guide.
+
+```http
+POST /api/jobs/ocr-organize
+Content-Type: multipart/form-data
+```
+
+**Request Body**:
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `file` | File (Image) | Yes | Image capture (`.jpg`, `.jpeg`, `.png`, `.webp`, `.heic`), max 50MB |
+
+**Response** `200 OK`:
+
+```json
+{
+  "job_id": 43,
+  "filename": "whiteboard_notes.jpg",
+  "page_count": 2,
+  "estimated_price": 5.50,
+  "organized_preview": "## 📚 Chapter 4: Circuit Analysis\n- Kirchhoff's Voltage Law...",
+  "status": "ready_for_payment"
+}
+```
+
 
 ---
 

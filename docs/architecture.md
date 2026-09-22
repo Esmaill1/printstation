@@ -117,23 +117,32 @@ PrintStation follows a **three-tier client-server architecture** connecting stud
 
 The prototype uses a **monolithic** architecture — all services live in one FastAPI application. Microservices are deferred to Phase 3 if needed.
 
-### 3.1 File Service
+### 3.1 Universal File Ingestion & Conversion Service
 
-**Responsibilities**: Upload validation, storage, page counting, text extraction.
+**Responsibilities**: Universal format validation, auto-conversion to standard A4 PDF, page counting, storage, and text extraction.
 
 ```
 POST /api/upload
-  → Validate file (PDF only, ≤50MB)
+  → Validate file type (PDF, Images, DOCX, PPTX, TXT) and size (≤50MB)
+  → If non-PDF (Image, Word, Slide, Text):
+      - Convert/scale/render into standardized A4 PDF
   → Generate UUID filename
   → Store in uploads/ directory
-  → Count pages with pypdf
-  → Return job_id, page_count, price
+  → Count physical pages with pypdf
+  → Return job_id, page_count, initial price
 ```
 
+**Supported Ingestion Formats**:
+- **PDF Documents**: `.pdf`
+- **Smartphone Photos & Images**: `.jpg`, `.jpeg`, `.png`, `.webp`, `.heic` (iPhone photos), `.bmp`, `.tiff` (auto-scaled and centered on A4)
+- **Microsoft Office Documents**: `.docx`, `.doc`, `.pptx`, `.ppt`
+- **Plain & Rich Text**: `.txt`, `.md`, `.rtf`
+
 **Validation rules**:
-- File type: PDF only (MIME + magic bytes check)
-- Max size: 50MB
-- Max pages: 500
+- Max file size: 50MB
+- Max printable pages: 500
+- Stored output: Always standard A4 PDF for consistent CUPS printing across all kiosks
+
 
 ### 3.2 Pricing Service
 
@@ -155,23 +164,28 @@ ai_fee = 2.00 if ai_mode == 'summarize' else 0.00
 total_price = max(3.00, base_cost + ai_fee)
 ```
 
-### 3.3 AI Service
+### 3.3 AI & Document Intelligence Service
 
-**Responsibilities**: Document summarization via Gemini API.
+**Responsibilities**: Document summarization, Multimodal Vision OCR to organized study notes, and OpenCV camera photo cleanup.
 
 ```
-Input: extracted text from PDF
-Output: summarized text (plain text or markdown)
+Capabilities:
+1. Multi-Page PDF Summarization (Gemini 2.0 Flash)
+   - Modes: Key Points, Study Notes, Exam Prep, Custom
+   - Compiles output to clean printable A4 PDF via ReportLab
+
+2. Image OCR to Organized Study Document (Multimodal Vision OCR + LLM)
+   - Ingests student smartphone photos of handwritten notebooks, whiteboards, or textbook pages
+   - Transcribes handwriting and printed text accurately via Vision OCR
+   - Structures noisy text into titled, formatted study notes (headings, bullets, formulas, key takeaways)
+   - Compiles output directly into a clean, ready-to-print A4 PDF
+
+3. OpenCV Document Photo Enhancer
+   - Deskews angled phone photos, corrects illumination, removes shadows, and converts to crisp monochrome
 ```
 
-**Architecture**:
-1. Extract text from PDF using pypdf
-2. Chunk text if exceeding token limit
-3. Send to Gemini API with system prompt
-4. Save result as text file
-5. Return summary for preview
+**Fallback**: If Gemini API is unavailable or unconfigured, gracefully degrades to simulated local academic summaries.
 
-**Fallback**: If Gemini API is unavailable, gracefully degrade — inform user that AI features are temporarily unavailable, allow standard printing.
 
 ### 3.4 Payment Service
 
